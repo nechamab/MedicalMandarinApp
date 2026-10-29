@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Med Mandarin">
+  <title>Medical Mandarin Companion</title>
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --accent: #38bdf8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.03);
+      --shadow-md: 0 10px 25px -5px rgba(2, 132, 199, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 20px 30px -10px rgba(2, 132, 199, 0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 60px; min-height: 100vh; }
+    
+    header { 
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); 
+      color: white; 
+      padding: 30px 20px 22px; 
+      text-align: center; 
+      border-bottom-left-radius: 28px; 
+      border-bottom-right-radius: 28px; 
+      box-shadow: var(--shadow-lg); 
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 200px;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    header h1 { font-size: 1.65rem; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px; }
+    header p { font-size: 0.88rem; opacity: 0.95; font-weight: 500; letter-spacing: 0.2px; }
+    
+    .container { max-width: 660px; margin: 0 auto; padding: 20px 16px; }
+
+    /* Mode Navigation Tabs */
+    .app-tabs { display: flex; background: #e2e8f0; border-radius: 16px; padding: 4px; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.04); }
+    .tab-btn { flex: 1; padding: 12px 6px; border: none; background: transparent; font-weight: 700; font-size: 0.88rem; color: var(--text-muted); border-radius: 12px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .tab-btn.active { background: white; color: var(--primary-dark); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+    /* Audio Settings Box */
+    .audio-settings { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
+    .switch-container { display: flex; align-items: center; justify-content: space-between; }
+    .switch-label { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    
+    /* Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 52px; height: 30px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 30px; }
+    .slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Category Navigation */
+    .nav-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .section-chip { padding: 10px 18px; background: white; border: 1px solid var(--border); border-radius: 30px; font-size: 0.85rem; font-weight: 700; white-space: nowrap; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease; }
+    .section-chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 6px 16px rgba(2, 132, 199, 0.3); transform: translateY(-1px); }
+
+    /* Flashcard Container */
+    .card-container { perspective: 1000px; margin-bottom: 24px; touch-action: pan-y; }
+    .flashcard { 
+      width: 100%; 
+      min-height: 300px; 
+      background: var(--card-bg); 
+      border: 1px solid var(--border); 
+      border-radius: var(--radius-lg); 
+      padding: 30px 24px; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between; 
+      align-items: center; 
+      text-align: center; 
+      box-shadow: var(--shadow-md); 
+      position: relative; 
+      user-select: none; 
+      transition: transform 0.2s ease, box-shadow 0.2s ease; 
+    }
+    .flashcard:active { transform: scale(0.99); }
+    .card-badge { position: absolute; top: 18px; left: 20px; font-size: 0.78rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; }
+    .srs-badge { position: absolute; top: 18px; right: 20px; font-size: 0.78rem; background: var(--primary-light); color: var(--primary-dark); padding: 5px 14px; border-radius: 16px; font-weight: 800; }
+    
+    .card-content { margin: auto 0; width: 100%; cursor: pointer; padding: 20px 0 10px; }
+    .english-text { font-size: 1.45rem; font-weight: 800; color: var(--text); margin-bottom: 12px; line-height: 1.35; letter-spacing: -0.3px; }
+    .chinese-container { display: none; margin-top: 18px; padding-top: 18px; border-top: 2px dashed #f1f5f9; }
+    .chinese-container.revealed { display: block; animation: fadeIn 0.3s ease; }
+    .hanzi { font-size: 2.5rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 6px; letter-spacing: 1.5px; }
+    .pinyin { font-size: 1.25rem; color: #0284c7; font-weight: 700; }
+
+    .card-actions { display: flex; gap: 14px; width: 100%; justify-content: center; align-items: center; margin-top: 20px; }
+    .btn-audio { background: #f0f9ff; border: 1.5px solid #bae6fd; color: var(--primary); width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.15); transition: transform 0.15s ease; }
+    .btn-audio:active { transform: scale(0.92); }
+    .btn-flip { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 14px 28px; border-radius: 28px; font-weight: 800; font-size: 1rem; cursor: pointer; flex: 1; max-width: 200px; box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35); transition: transform 0.15s ease; }
+    .btn-flip:active { transform: scale(0.96); }
+
+    /* Keyboard Guide */
+    .keyboard-guide { display: flex; justify-content: center; gap: 12px; font-size: 0.78rem; color: var(--text-muted); margin-top: 16px; font-weight: 600; flex-wrap: wrap; }
+    .key-badge { background: #e2e8f0; padding: 3px 8px; border-radius: 6px; color: var(--text); font-family: monospace; font-weight: 800; }
+
+    /* SRS Buttons */
+    .srs-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+    .srs-btn { padding: 14px 6px; border: none; border-radius: 14px; font-weight: 800; font-size: 0.8rem; color: white; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.12); transition: transform 0.15s ease; }
+    .srs-btn:active { transform: scale(0.95); }
+    .srs-again { background: var(--danger); }
+    .srs-hard { background: var(--warning); }
+    .srs-good { background: var(--primary); }
+    .srs-easy { background: var(--success); }
+
+    /* Views */
+    .view-panel { display: none; }
+    .view-panel.active { display: block; }
+
+    /* Scenario & Grammar Styling */
+    .info-card { background: white; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 22px; margin-bottom: 18px; box-shadow: var(--shadow-sm); }
+    .info-title { font-weight: 800; font-size: 1.15rem; color: var(--primary-dark); margin-bottom: 12px; }
+    .dialogue-line { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
+    .dialogue-speaker { font-weight: 800; font-size: 0.82rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.6px; }
+    .dialogue-text { font-size: 1.05rem; margin-top: 3px; font-weight: 700; color: var(--text); }
+    .dialogue-sub { font-size: 0.88rem; color: var(--text-muted); font-style: italic; margin-top: 3px; }
+
+    footer { text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 40px; font-weight: 600; line-height: 1.6; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Medical Mandarin App</h1>
+  </header>
+
+  <div class="container">
+    
+    <div class="app-tabs">
+      <button class="tab-btn active" onclick="switchView('flashcards')">Flashcards</button>
+      <button class="tab-btn" onclick="switchView('scenarios')">Clinical Vignettes</button>
+      <button class="tab-btn" onclick="switchView('grammar')">Grammar Rules</button>
+    </div>
+
+    <div class="audio-settings">
+      <div class="switch-container">
+        <span class="switch-label">Audio Source: <strong id="audio-status-text" style="color: var(--primary);">GitHub Audio Folder</strong></span>
+        <label class="switch">
+          <input type="checkbox" id="audio-toggle" checked onchange="toggleAudioEngine(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- FLASHCARD VIEW -->
+    <div id="view-flashcards" class="view-panel active">
+      <div class="nav-scroll" id="section-nav"></div>
+
+      <div class="card-container" id="card-container">
+        <div class="flashcard" id="main-card">
+          <div class="card-badge" id="card-section">Section</div>
+          <div class="srs-badge" id="card-box">Box 1</div>
+
+          <div class="card-content" onclick="toggleFlip()">
+            <div class="english-text" id="card-english">Loading...</div>
+            <div class="chinese-container" id="chinese-box">
+              <div class="hanzi" id="card-hanzi">中文</div>
+              <div class="pinyin" id="card-pinyin">Zhōng wén</div>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn-audio" onclick="playAudio(event)" title="Play Audio">🔊</button>
+            <button class="btn-flip" onclick="toggleFlip()">Flip Card</button>
+          </div>
+        </div>
+
+        <div class="keyboard-guide">
+          <span><span class="key-badge">Space</span> Flip</span>
+          <span><span class="key-badge">←</span> Again</span>
+          <span><span class="key-badge">↓</span> Hard</span>
+          <span><span class="key-badge">→</span> Good</span>
+          <span><span class="key-badge">↑</span> Easy</span>
+        </div>
+
+        <div class="srs-controls" id="srs-buttons" style="display: none;">
+          <button class="srs-btn srs-again" onclick="rateCard(1)">Again (←)</button>
+          <button class="srs-btn srs-hard" onclick="rateCard(2)">Hard (↓)</button>
+          <button class="srs-btn srs-good" onclick="rateCard(3)">Good (→)</button>
+          <button class="srs-btn srs-easy" onclick="rateCard(4)">Easy (↑)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLINICAL VIGNETTES VIEW -->
+    <div id="view-scenarios" class="view-panel">
+      <div class="info-card">
+        <div class="info-title">Scenario 1: Waiting Room & Escort (Session 1)</div>
+        <div class="dialogue-line">
+          <div class="dialogue-speaker">Med Student</div>
+          <div class="dialogue-text">不好意思让你久等了，请跟我来。</div>
+          <div class="dialogue-sub">Bù hǎo yìsi ràng nín jiǔ děng le, qǐng gēn wǒ lái. (Sorry to keep you waiting, please follow me.)</div>
+        </div>
+        <div class="dialogue-line">
+          <div class="dialogue-speaker">Patient</div>
+          <div class="dialogue-text">没事，我只等了三十分钟。</div>
+          <div class="dialogue-sub">Méishì, wǒ zhǐ děngle sānshí fēnzhōng. (No worries, I only waited 30 minutes.)</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-title">Scenario 2: Interpreter Request (Session 1)</div>
+        <div class="dialogue-line">
+          <div class="dialogue-speaker">Med Student</div>
+          <div class="dialogue-text">你好，我是医学生。我只会说一点点中文，让我找一名翻译。</div>
+          <div class="dialogue-sub">Wǒ zhǐ huì shuō yī diǎn diǎn Zhōngwén, ràng wǒ zhǎo yī míng fān yì. (I only speak a little Chinese, let me find an interpreter.)</div>
+        </div>
+        <div class="dialogue-line">
+          <div class="dialogue-speaker">Nurse</div>
+          <div class="dialogue-text">别担心，我是一名护士，我会说中文。</div>
+          <div class="dialogue-sub">Bié dān xīn, wǒ shì yì míng hùshì, wǒ huì shuō Zhōngwén. (Don't worry, I am a nurse and I can speak Chinese.)</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-title">Scenario 3: 45yo Male Back Pain HPI (Session 4)</div>
+        <div class="dialogue-line">
+          <div class="dialogue-speaker">Doctor</div>
+          <div class="dialogue-text">你好，我是医学生。你叫什么？你为什么来看医生？</div>
+          <div class="dialogue-sub">Nǐ hǎo. Wǒ shì yī xuéshēng. Nǐ jiào shén me? Nǐ wèi shén me lái kàn yī shēng?</div>
+        </div>
+        <div class="dialogue-line">
+          <div class="dialogue-speaker">Patient</div>
+          <div class="dialogue-text">我的背痛。三个小时前开始。</div>
+          <div class="dialogue-sub">Wǒ de bèi tòng. Sān ge xiǎo shí qián kāi shǐ. (My back hurts. Started 3 hours ago.)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRAMMAR RULES VIEW -->
+    <div id="view-grammar" class="view-panel">
+      <div class="info-card">
+        <div class="info-title">Mandarin Sentence Structure Rules</div>
+        <div style="font-size: 0.95rem; line-height: 1.6;">
+          <p><strong>1. Basic Timeline Order:</strong><br>Subject + Time (When) + Location + Verb + Object</p>
+          <p style="color: var(--primary-dark); font-weight: 700; margin-top: 4px;">我早上九点会去看医生。<br><span style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted);">Wǒ zǎoshang jiǔ diǎn huì qù kàn yīshēng. (I will see doctor at 9am.)</span></p>
+          
+          <hr style="margin: 14px 0; border: none; border-top: 1px solid var(--border);">
+          
+          <p><strong>2. Time Duration Rule:</strong><br>Subject + Verb + Time Duration</p>
+          <p style="color: var(--primary-dark); font-weight: 700; margin-top: 4px;">我讲了三个小时。<br><span style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted);">Wǒ jiǎngle sān gè xiǎoshí. (I talked for 3 hours.)</span></p>
+
+          <hr style="margin: 14px 0; border: none; border-top: 1px solid var(--border);">
+
+          <p><strong>3. Giving Directions:</strong><br>Subject + 在 (zài) + Direction</p>
+          <p style="color: var(--primary-dark); font-weight: 700; margin-top: 4px;">医院在左边。<br><span style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted);">Yīyuàn zài zuǒbiān. (The hospital is on the left.)</span></p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Medical Mandarin App &bull; Sessions 1–4 Integration &bull; Developed by Nechama Borisute
+    </footer>
+  </div>
+
+  <script>
+    const flashcards = [
+      // Greetings & Courtesy
+      { id: "g1", section: "Greetings", english: "Hello", hanzi: "你好", pinyin: "Nǐ hǎo", audioFile: "Hello" },
+      { id: "g2", section: "Greetings", english: "How are you?", hanzi: "你好吗", pinyin: "Nǐ hǎo ma", audioFile: "How are you" },
+      { id: "g3", section: "Greetings", english: "Good morning", hanzi: "早上好", pinyin: "Zǎo shàng hǎo", audioFile: "Morning" },
+      { id: "g4", section: "Greetings", english: "Thank you", hanzi: "谢谢", pinyin: "Xiè xiè", audioFile: "Thanks" },
+      { id: "g5", section: "Greetings", english: "Sorry / Excuse me", hanzi: "对不起", pinyin: "Duì bù qǐ", audioFile: "Sorry" },
+      { id: "g6", section: "Greetings", english: "Sorry to keep you waiting", hanzi: "不好意思让你久等了", pinyin: "Bù hǎo yìsi ràng nǐ jiǔ děng le", audioFile: "sorry to keep you waiting" },
+      { id: "g7", section: "Greetings", english: "Please take a seat", hanzi: "请坐", pinyin: "Qǐng zuò", audioFile: "please take a seat" },
+      { id: "g8", section: "Greetings", english: "Please wait a moment", hanzi: "稍等一下", pinyin: "Shāo děng yīxià", audioFile: "Please wait a moment" },
+      { id: "g9", section: "Greetings", english: "Goodbye", hanzi: "再见", pinyin: "Zài jiàn", audioFile: "goodbye" },
+      { id: "g10", section: "Greetings", english: "Take care", hanzi: "慢走", pinyin: "Màn zǒu", audioFile: "take care" },
+      { id: "g11", section: "Greetings", english: "You are welcome", hanzi: "不客气", pinyin: "Bú kè qì", audioFile: "you are welcome" },
+      { id: "g12", section: "Greetings", english: "I don't know", hanzi: "我不知道", pinyin: "Wǒ bù zhī dào", audioFile: "I dont know" },
+      { id: "g13", section: "Greetings", english: "Okay", hanzi: "好", pinyin: "Hǎo", audioFile: "Okay" },
+      { id: "g14", section: "Greetings", english: "Yes", hanzi: "是", pinyin: "Shì", audioFile: "Yes" },
+
+      // Roles & Introductions
+      { id: "p1", section: "Roles & Titles", english: "I am ...", hanzi: "我是...", pinyin: "Wǒ shì...", audioFile: "I am ..." },
+      { id: "p2", section: "Roles & Titles", english: "Doctor", hanzi: "医生", pinyin: "Yī shēng", audioFile: "doctor" },
+      { id: "p3", section: "Roles & Titles", english: "Medical student", hanzi: "医学生", pinyin: "Yī xuéshēng", audioFile: "medical student" },
+      { id: "p4", section: "Roles & Titles", english: "Nurse", hanzi: "护士", pinyin: "Hùshì", audioFile: "nurse" },
+      { id: "p5", section: "Roles & Titles", english: "Nursing student", hanzi: "护士学生", pinyin: "Hùshì xuéshēng", audioFile: "nursing student" },
+      { id: "p6", section: "Roles & Titles", english: "PA student", hanzi: "医生助理学生", pinyin: "Yīshēng zhùlǐ xuéshēng", audioFile: "PA student" },
+      { id: "p7", section: "Roles & Titles", english: "Post doc", hanzi: "博士后", pinyin: "Bóshìhòu", audioFile: "post doc" },
+      { id: "p8", section: "Roles & Titles", english: "Volunteer", hanzi: "义工", pinyin: "Yìgōng", audioFile: "volunteer" },
+      { id: "p9", section: "Roles & Titles", english: "What is your name?", hanzi: "你叫什么？", pinyin: "Nǐ jiào shén me?", audioFile: "what-is-your-name" },
+      { id: "p10", section: "Roles & Titles", english: "My name is...", hanzi: "我叫...", pinyin: "Wǒ jiào...", audioFile: "My name is" },
+      { id: "p11", section: "Roles & Titles", english: "I speak a little Chinese", hanzi: "我会说一点中文", pinyin: "Wǒ huì shuō yīdiǎn zhōngwén", audioFile: "i speak a little chinese" },
+      { id: "p12", section: "Roles & Titles", english: "Do you speak Mandarin?", hanzi: "你讲中文吗？", pinyin: "Nǐ jiǎng zhōng wén ma?", audioFile: "do you speak mandarin" },
+      { id: "p13", section: "Roles & Titles", english: "Translate / Interpreter", hanzi: "翻译", pinyin: "Fān yì", audioFile: "translate" },
+      { id: "p14", section: "Roles & Titles", english: "Mr.", hanzi: "先生", pinyin: "Xiān shēng", audioFile: "Mr." },
+      { id: "p15", section: "Roles & Titles", english: "Miss", hanzi: "小姐", pinyin: "Xiăojiě", audioFile: "Miss" },
+
+      // Pronouns & Direction Basics
+      { id: "pr1", section: "Pronouns", english: "You (singular)", hanzi: "你", pinyin: "Nǐ", audioFile: "you-_s_" },
+      { id: "pr2", section: "Pronouns", english: "You (plural)", hanzi: "你们", pinyin: "Nǐ men", audioFile: "you-_pl_" },
+      { id: "pr3", section: "Pronouns", english: "He / Him", hanzi: "他", pinyin: "Tā", audioFile: "he_him" },
+      { id: "pr4", section: "Pronouns", english: "They / Them", hanzi: "他们", pinyin: "Tā men", audioFile: "they" },
+      { id: "pr5", section: "Pronouns", english: "We / Us", hanzi: "我们", pinyin: "Wǒ men", audioFile: "we_us" },
+      { id: "pr6", section: "Pronouns", english: "This person", hanzi: "这位", pinyin: "Zhè wèi", audioFile: "this_person_converted_by_soundandgo.com_" },
+      { id: "pr7", section: "Pronouns", english: "This thing", hanzi: "这个", pinyin: "Zhè gè", audioFile: "this_thing_converted_by_soundandgo.com_" },
+      { id: "pr8", section: "Pronouns", english: "That person", hanzi: "那位", pinyin: "Nà wèi", audioFile: "that_person_converted_by_soundandgo.com_" },
+      { id: "pr9", section: "Pronouns", english: "That thing", hanzi: "那个", pinyin: "Nà gè", audioFile: "that_thing_converted_by_soundandgo.com_" },
+      { id: "pr10", section: "Pronouns", english: "Here", hanzi: "这里", pinyin: "Zhè lǐ", audioFile: "here_converted_by_soundandgo.com_" },
+      { id: "pr11", section: "Pronouns", english: "There", hanzi: "那里", pinyin: "Nà lǐ", audioFile: "there_converted_by_soundandgo.com_" },
+
+      // Numbers & Time
+      { id: "num1", section: "Numbers & Time", english: "One", hanzi: "一", pinyin: "Yī", audioFile: "One" },
+      { id: "num2", section: "Numbers & Time", english: "Two", hanzi: "二", pinyin: "Èr", audioFile: "Two" },
+      { id: "num3", section: "Numbers & Time", english: "Three", hanzi: "三", pinyin: "Sān", audioFile: "Three" },
+      { id: "num4", section: "Numbers & Time", english: "Four", hanzi: "四", pinyin: "Sì", audioFile: "Four" },
+      { id: "num5", section: "Numbers & Time", english: "Six", hanzi: "六", pinyin: "Liù", audioFile: "Six" },
+      { id: "num6", section: "Numbers & Time", english: "Seven", hanzi: "七", pinyin: "Qī", audioFile: "Seven" },
+      { id: "num7", section: "Numbers & Time", english: "Eight", hanzi: "八", pinyin: "Bā", audioFile: "Eight" },
+      { id: "num8", section: "Numbers & Time", english: "Ten", hanzi: "十", pinyin: "Shí", audioFile: "Ten" },
+      { id: "num9", section: "Numbers & Time", english: "One second", hanzi: "一秒钟", pinyin: "Yī miǎo zhōng", audioFile: "One Second" },
+      { id: "num10", section: "Numbers & Time", english: "Two minutes", hanzi: "兩分钟", pinyin: "Liǎng fēn zhōng", audioFile: "Two minutes" },
+      { id: "num11", section: "Numbers & Time", english: "Morning (time)", hanzi: "早上", pinyin: "Zǎo shàng", audioFile: "Morning" },
+      { id: "num12", section: "Numbers & Time", english: "Noon", hanzi: "中午", pinyin: "Zhōng wǔ", audioFile: "Noon" },
+      { id: "num13", section: "Numbers & Time", english: "Night", hanzi: "晚上", pinyin: "Wǎn shàng", audioFile: "Night" },
+      { id: "num14", section: "Numbers & Time", english: "7:00 AM", hanzi: "早上七点", pinyin: "Zǎo shàng qī diǎn", audioFile: "7AM hurt" },
+      { id: "num15", section: "Numbers & Time", english: "3:30 PM", hanzi: "下午三点半", pinyin: "Xià wǔ sān diǎn bàn", audioFile: "330pm" },
+      { id: "num16", section: "Numbers & Time", english: "Today", hanzi: "今天", pinyin: "Jīn tiān", audioFile: "Today" },
+      { id: "num17", section: "Numbers & Time", english: "Yesterday", hanzi: "昨天", pinyin: "Zuó tiān", audioFile: "Yesterday" },
+      { id: "num18", section: "Numbers & Time", english: "Tomorrow", hanzi: "明天", pinyin: "Míng tiān", audioFile: "Tomorrow" },
+      { id: "num19", section: "Numbers & Time", english: "One day", hanzi: "一天", pinyin: "Yī tiān", audioFile: "One day" },
+      { id: "num20", section: "Numbers & Time", english: "One month", hanzi: "一月", pinyin: "Yī yuè", audioFile: "One Month" },
+      { id: "num21", section: "Numbers & Time", english: "One year", hanzi: "一年", pinyin: "Yī nián", audioFile: "One year" },
+      { id: "num22", section: "Numbers & Time", english: "This week", hanzi: "这周", pinyin: "Zhè zhōu", audioFile: "This week" },
+      { id: "num23", section: "Numbers & Time", english: "Last week", hanzi: "上周", pinyin: "Shàng zhōu", audioFile: "Last week" },
+      { id: "num24", section: "Numbers & Time", english: "Next week", hanzi: "下周", pinyin: "Xià zhōu", audioFile: "Next week" },
+      { id: "num25", section: "Numbers & Time", english: "Weekend", hanzi: "周末", pinyin: "Zhōumò", audioFile: "Weekend" },
+      { id: "num26", section: "Numbers & Time", english: "Last night", hanzi: "昨天晚上", pinyin: "Zuó tiān wǎn shàng", audioFile: "Last night" },
+      { id: "num27", section: "Numbers & Time", english: "3 months", hanzi: "三个月", pinyin: "Sān gè yuè", audioFile: "3 months" },
+
+      // Body Parts
+      { id: "b1", section: "Body Parts", english: "Head", hanzi: "头", pinyin: "Tóu", audioFile: "head" },
+      { id: "b2", section: "Body Parts", english: "Hair", hanzi: "头发", pinyin: "Tóu fǎ", audioFile: "hair" },
+      { id: "b3", section: "Body Parts", english: "Face", hanzi: "脸", pinyin: "Liǎn", audioFile: "face" },
+      { id: "b4", section: "Body Parts", english: "Ear", hanzi: "耳朵", pinyin: "Ěr dūo", audioFile: "ear" },
+      { id: "b5", section: "Body Parts", english: "Nose", hanzi: "鼻子", pinyin: "Bí zi", audioFile: "nose" },
+      { id: "b6", section: "Body Parts", english: "Mouth", hanzi: "嘴巴", pinyin: "Zuǐ bā", audioFile: "mouth" },
+      { id: "b7", section: "Body Parts", english: "Teeth", hanzi: "牙齿", pinyin: "Yá chǐ", audioFile: "teeth" },
+      { id: "b8", section: "Body Parts", english: "Neck", hanzi: "脖子", pinyin: "Bó zi", audioFile: "neck" },
+      { id: "b9", section: "Body Parts", english: "Shoulder", hanzi: "肩膀", pinyin: "Jiān bǎng", audioFile: "shoulder" },
+      { id: "b10", section: "Body Parts", english: "Arm", hanzi: "手臂", pinyin: "Shǒu bì", audioFile: "arm" },
+      { id: "b11", section: "Body Parts", english: "Hand", hanzi: "手", pinyin: "Shǒu", audioFile: "hand" },
+      { id: "b12", section: "Body Parts", english: "Back", hanzi: "背", pinyin: "Bèi", audioFile: "back" },
+      { id: "b13", section: "Body Parts", english: "Lung", hanzi: "肺", pinyin: "Fèi", audioFile: "lung" },
+      { id: "b14", section: "Body Parts", english: "Leg", hanzi: "腿", pinyin: "Tuǐ", audioFile: "leg_converted_by_soundandgo.com_" },
+      { id: "b15", section: "Body Parts", english: "Knee", hanzi: "膝盖", pinyin: "Xī gài", audioFile: "knee_converted_by_soundandgo.com_" },
+      { id: "b16", section: "Body Parts", english: "Foot", hanzi: "脚", pinyin: "Jiǎo", audioFile: "foot_converted_by_soundandgo.com_" },
+      { id: "b17", section: "Body Parts", english: "Shoulder hurt", hanzi: "肩膀痛", pinyin: "Jiān bǎng tòng", audioFile: "Shoulder hurt" },
+
+      // Basic Questions
+      { id: "q1", section: "Basic Questions", english: "Why / What", hanzi: "为什么", pinyin: "Wèi shén me", audioFile: "why_what_converted_by_soundandgo.com_" },
+      { id: "q2", section: "Basic Questions", english: "Why come see doctor", hanzi: "你为什么来看医生", pinyin: "Nǐ wèi shén me lái kàn yī shēng", audioFile: "Why come see doctor" },
+      { id: "q3", section: "Basic Questions", english: "Who", hanzi: "谁", pinyin: "Shéi", audioFile: "who_converted_by_soundandgo.com_" },
+      { id: "q4", section: "Basic Questions", english: "Who is this person?", hanzi: "这个人是谁？", pinyin: "Zhège rén shì shéi?", audioFile: "who_is_this_person_converted_by_soundandgo.com_" },
+      { id: "q5", section: "Basic Questions", english: "When", hanzi: "什么时候", pinyin: "Shén me shí hòu", audioFile: "when_converted_by_soundandgo.com_" },
+      { id: "q6", section: "Basic Questions", english: "When did your pain start?", hanzi: "什么时候开始痛？", pinyin: "Shén me shí hòu kāi shǐ tòng?", audioFile: "When start hurt" },
+      { id: "q7", section: "Basic Questions", english: "Where", hanzi: "哪里", pinyin: "Nǎ lǐ", audioFile: "where_converted_by_soundandgo.com_" },
+      { id: "q8", section: "Basic Questions", english: "Where is your pain?", hanzi: "哪里痛？", pinyin: "Nǎ lǐ tòng?", audioFile: "where_is_your_pain_converted_by_soundandgo.com_" },
+
+      // HPI & Pain
+      { id: "h1", section: "HPI", english: "Why are you coming to see the doctor?", hanzi: "你为什么来看医生？", pinyin: "Nǐ wèi shén me lái kàn yī shēng?", audioFile: "why_are_you_coming_to_see_the_doctor_converted_by_soundandgo.com_" },
+      { id: "h2", section: "HPI", english: "When did it start?", hanzi: "什么时候开始？", pinyin: "Shén me shí hòu kāi shǐ?", audioFile: "When did it start" },
+      { id: "h3", section: "HPI", english: "From 1 to 10", hanzi: "从一到十", pinyin: "Cóng yī dào shí", audioFile: "From 1 to 10" },
+      { id: "h4", section: "HPI", english: "How much pain are you in?", hanzi: "你有多痛？", pinyin: "Nǐ yǒu duō tòng?", audioFile: "How much pain are you in" },
+      { id: "h5", section: "HPI", english: "Could you point to where it hurts?", hanzi: "能指一指哪里痛吗？", pinyin: "Néng zhǐ yī zhǐ nǎ lǐ tòng ma?", audioFile: "Could you point to where" },
+      { id: "h6", section: "HPI", english: "It hurts here", hanzi: "这里痛", pinyin: "Zhè lǐ tòng", audioFile: "It hurts here" },
+      { id: "h7", section: "HPI", english: "Alleviate / Reduce pain", hanzi: "什么会減少你的痛？", pinyin: "Shén me huì jiǎn shǎo nǐ de tòng", audioFile: "Alleviate" },
+      { id: "h8", section: "HPI", english: "Don't move", hanzi: "不动", pinyin: "Bú dòng", audioFile: "Dont move" },
+      { id: "h9", section: "HPI", english: "Take pain medications", hanzi: "吃止痛药", pinyin: "Chī zhǐ tòng yào", audioFile: "Painkillers" },
+      { id: "h10", section: "HPI", english: "Walk / Run", hanzi: "走路", pinyin: "Zǒu lù", audioFile: "Walk" },
+      { id: "h11", section: "HPI", english: "Cough", hanzi: "咳嗽", pinyin: "Ké sòu", audioFile: "Cough" },
+
+      // Review of Systems (ROS)
+      { id: "r1", section: "ROS", english: "Fever", hanzi: "发烧", pinyin: "Fā shāo", audioFile: "Fever" },
+      { id: "r2", section: "ROS", english: "Difficulty breathing", hanzi: "呼吸困难", pinyin: "Hū xī kùn nán", audioFile: "Difficulty Breathing" },
+      { id: "r3", section: "ROS", english: "Vomit", hanzi: "呕吐", pinyin: "Ǒu tù", audioFile: "Vomit" },
+      { id: "r4", section: "ROS", english: "Bleeding", hanzi: "流血", pinyin: "Liú xuě", audioFile: "Bleeding" },
+      { id: "r5", section: "ROS", english: "Tired", hanzi: "累", pinyin: "Lèi", audioFile: "Tired" },
+      { id: "r6", section: "ROS", english: "Any recent weight changes?", hanzi: "最近重量有变吗？", pinyin: "Zuì jìn zhòng liàng yǒu biàn ma?", audioFile: "any recent weight changes" },
+      { id: "r7", section: "ROS", english: "How much?", hanzi: "多少？", pinyin: "Duō shǎo?", audioFile: "How much" },
+      { id: "r8", section: "ROS", english: "Other symptoms", hanzi: "有其他症状吗？", pinyin: "Yǒu qí tā zhèng zhuàng ma?", audioFile: "Other symptoms" },
+
+      // PMH & Illnesses
+      { id: "pm1", section: "PMH & FH", english: "In the past, have you had...", hanzi: "你以前有...吗？", pinyin: "Nǐ yǐ qián yǒu...ma?", audioFile: "in the past have you had" },
+      { id: "pm2", section: "PMH & FH", english: "Medical problems", hanzi: "健康问题", pinyin: "Jiànkāng wèntí", audioFile: "medical problems" },
+      { id: "pm3", section: "PMH & FH", english: "Hospital admission", hanzi: "住院", pinyin: "Zhù yuàn", audioFile: "hospital admission" },
+      { id: "pm4", section: "PMH & FH", english: "Accident", hanzi: "意外", pinyin: "Yì wài", audioFile: "accident" },
+      { id: "pm5", section: "PMH & FH", english: "Surgery", hanzi: "手术", pinyin: "Shǒu shù", audioFile: "surgery" },
+      { id: "pm6", section: "PMH & FH", english: "Do you have other medical problems?", hanzi: "你有其他健康问题吗？", pinyin: "Nǐ yǒu qí tā jiàn kāng wèn tí ma?", audioFile: "do you have other medical problems" },
+      { id: "pm7", section: "PMH & FH", english: "What medications do you take?", hanzi: "你吃什么药？", pinyin: "Nǐ chī shén me yào?", audioFile: "what medications do you take" },
+      { id: "pm8", section: "PMH & FH", english: "Do you have allergies?", hanzi: "你有过敏吗？", pinyin: "Nǐ yǒu guò mǐn ma?", audioFile: "do you have allergies" },
+      { id: "pm9", section: "PMH & FH", english: "Hypertension", hanzi: "高血压", pinyin: "Gāo xuě yā", audioFile: "hypertension" },
+      { id: "pm10", section: "PMH & FH", english: "Diabetes", hanzi: "糖尿病", pinyin: "Táng niào bìng", audioFile: "diabetes" },
+      { id: "pm11", section: "PMH & FH", english: "Cancer", hanzi: "癌症", pinyin: "Ái zhèng", audioFile: "cancer" },
+      { id: "pm12", section: "PMH & FH", english: "Does your ___ have health problems?", hanzi: "你的___有健康问题吗？", pinyin: "Nǐ de___yǒu jiàn kāng wèn tí ma?", audioFile: "does your ___ have health problems" },
+      { id: "pm13", section: "PMH & FH", english: "Family members", hanzi: "家人", pinyin: "Jiā rén", audioFile: "family members" },
+      { id: "pm14", section: "PMH & FH", english: "Father", hanzi: "爸爸", pinyin: "Bà ba", audioFile: "father" },
+      { id: "pm15", section: "PMH & FH", english: "Dad", hanzi: "爸爸", pinyin: "Bà ba", audioFile: "dad" },
+      { id: "pm16", section: "PMH & FH", english: "Siblings", hanzi: "兄弟姐妹", pinyin: "Xiōng dì jiě mèi", audioFile: "siblings" },
+      { id: "pm17", section: "PMH & FH", english: "Children", hanzi: "孩子", pinyin: "Hái zi", audioFile: "children" },
+
+      // Social History & Diet
+      { id: "s1", section: "Social History", english: "Do you work?", hanzi: "你做工吗？", pinyin: "Nǐ zuò gōng ma?", audioFile: "do-you-work" },
+      { id: "s2", section: "Social History", english: "Do you smoke?", hanzi: "你抽烟吗？", pinyin: "Nǐ chōu yān ma?", audioFile: "do you smoke" },
+      { id: "s3", section: "Social History", english: "Do you drink alcohol?", hanzi: "你喝酒吗？", pinyin: "Nǐ hē jiǔ ma?", audioFile: "do you drink alcohol" },
+      { id: "s4", section: "Social History", english: "Do you use drugs?", hanzi: "你用毒品吗？", pinyin: "Nǐ yòng dú pǐn ma?", audioFile: "do you use drugs" },
+      { id: "s5", section: "Social History", english: "Are you sexually active?", hanzi: "你有性生活吗？", pinyin: "Ní yǒu xìng shēng huó ma?", audioFile: "are-you-sexually-active" },
+      { id: "s6", section: "Social History", english: "What do you usually eat?", hanzi: "你平时吃什么？", pinyin: "Nǐ píng shí chī shén me?", audioFile: "what-do-you-usually-eat" },
+      { id: "s7", section: "Social History", english: "Vegetables", hanzi: "菜", pinyin: "Cài", audioFile: "vegetables" },
+      { id: "s8", section: "Social History", english: "Fish", hanzi: "魚", pinyin: "Yú", audioFile: "fish" },
+      { id: "s9", section: "Social History", english: "Meat", hanzi: "肉", pinyin: "Ròu", audioFile: "meat" },
+      { id: "s10", section: "Social History", english: "Rice", hanzi: "飯", pinyin: "Fàn", audioFile: "rice" },
+
+      // Practice Vocab
+      { id: "v1", section: "Practice Vocab", english: "Apple", hanzi: "苹果", pinyin: "Píngguǒ", audioFile: "apple" },
+      { id: "v2", section: "Practice Vocab", english: "Hot pot", hanzi: "火锅", pinyin: "Huǒguō", audioFile: "hot pot" },
+      { id: "v3", section: "Practice Vocab", english: "Chinese tones", hanzi: "声调", pinyin: "Shēngdiào", audioFile: "Chinese tones" }
+    ];
+
+    let currentSection = "All";
+    let currentIndex = 0;
+    let filteredCards = [...flashcards];
+    let isFlipped = false;
+    let useGitHubAudio = true;
+
+    const cardState = JSON.parse(localStorage.getItem("med_mandarin_srs") || "{}");
+
+    function init() {
+      renderSections();
+      filterCards("All");
+      setupKeyboardAndTouch();
+    }
+
+    function switchView(viewName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+
+      event.target.classList.add('active');
+      document.getElementById(`view-${viewName}`).classList.add('active');
+    }
+
+    function renderSections() {
+      const sections = ["All", ...new Set(flashcards.map(c => c.section))];
+      const nav = document.getElementById("section-nav");
+      nav.innerHTML = sections.map(s => `
+        <button class="section-chip ${s === currentSection ? 'active' : ''}" onclick="filterCards('${s}')">${s}</button>
+      `).join('');
+    }
+
+    function filterCards(section) {
+      currentSection = section;
+      renderSections();
+      filteredCards = section === "All" ? [...flashcards] : flashcards.filter(c => c.section === section);
+      currentIndex = 0;
+      showCard();
+    }
+
+    function showCard() {
+      if (filteredCards.length === 0) return;
+      const card = filteredCards[currentIndex];
+      const srsBox = cardState[card.id] || 1;
+
+      document.getElementById("card-section").innerText = card.section;
+      document.getElementById("card-box").innerText = `Box ${srsBox}`;
+      document.getElementById("card-english").innerText = card.english;
+      document.getElementById("card-hanzi").innerText = card.hanzi;
+      document.getElementById("card-pinyin").innerText = card.pinyin;
+
+      isFlipped = false;
+      document.getElementById("chinese-box").classList.remove("revealed");
+      document.getElementById("srs-buttons").style.display = "none";
+    }
+
+    function toggleFlip() {
+      isFlipped = !isFlipped;
+      if (isFlipped) {
+        document.getElementById("chinese-box").classList.add("revealed");
+        document.getElementById("srs-buttons").style.display = "grid";
+      } else {
+        document.getElementById("chinese-box").classList.remove("revealed");
+        document.getElementById("srs-buttons").style.display = "none";
+      }
+    }
+
+    function toggleAudioEngine(checked) {
+      useGitHubAudio = checked;
+      document.getElementById("audio-status-text").innerText = checked ? "GitHub Audio Folder" : "Default TTS";
+    }
+
+    function playAudio(e) {
+      if (e) e.stopPropagation();
+      const card = filteredCards[currentIndex];
+      
+      if (!useGitHubAudio) {
+        const utterance = new SpeechSynthesisUtterance(card.hanzi);
+        utterance.lang = "zh-CN";
+        window.speechSynthesis.speak(utterance);
+        return;
+      }
+
+      const fileStem = card.audioFile;
+      const candidates = [
+        `audio/${fileStem}.mp3`,
+        `audio/${encodeURIComponent(fileStem)}.mp3`,
+        `audio/${fileStem}`,
+        `audio/${encodeURIComponent(fileStem)}`,
+        `audio/${fileStem}.m4a`,
+        `audio/${fileStem}.wav`
+      ];
+
+      function tryNext(index) {
+        if (index >= candidates.length) {
+          const utterance = new SpeechSynthesisUtterance(card.hanzi);
+          utterance.lang = "zh-CN";
+          window.speechSynthesis.speak(utterance);
+          return;
+        }
+        const audio = new Audio(candidates[index]);
+        audio.play().catch(() => {
+          tryNext(index + 1);
+        });
+      }
+
+      tryNext(0);
+    }
+
+    function rateCard(box) {
+      const card = filteredCards[currentIndex];
+      cardState[card.id] = box;
+      localStorage.setItem("med_mandarin_srs", JSON.stringify(cardState));
+
+      currentIndex = (currentIndex + 1) % filteredCards.length;
+      showCard();
+    }
+
+    function nextCard() {
+      currentIndex = (currentIndex + 1) % filteredCards.length;
+      showCard();
+    }
+
+    function prevCard() {
+      currentIndex = (currentIndex - 1 + filteredCards.length) % filteredCards.length;
+      showCard();
+    }
+
+    function setupKeyboardAndTouch() {
+      document.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+
+        if (e.code === 'Space') {
+          e.preventDefault();
+          toggleFlip();
+        } else if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          if (isFlipped) rateCard(1); else prevCard();
+        } else if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          if (isFlipped) rateCard(3); else nextCard();
+        } else if (e.code === 'ArrowUp') {
+          e.preventDefault();
+          if (isFlipped) rateCard(4);
+        } else if (e.code === 'ArrowDown') {
+          e.preventDefault();
+          if (isFlipped) rateCard(2);
+        }
+      });
+
+      let touchStartX = 0;
+      let touchStartY = 0;
+      const cardContainer = document.getElementById('card-container');
+
+      cardContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+
+      cardContainer.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+          if (diffX > 0) {
+            if (isFlipped) rateCard(3); else nextCard();
+          } else {
+            if (isFlipped) rateCard(1); else prevCard();
+          }
+        }
+      }, { passive: true });
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
