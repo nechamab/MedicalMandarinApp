@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- iOS PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Med Mandarin">
+  <link rel="apple-touch-icon" href="https://placehold.co/180x180/0284c7/ffffff?text=Med+ZH">
+  
+  <title>Medical Mandarin Companion</title>
+  
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            medical: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#0a3853',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .perspective-1000 { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+    .transition-transform-500 { transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Custom Switch Slider */
+    .switch-slider {
+      position: relative;
+      display: inline-block;
+      width: 54px;
+      height: 28px;
+    }
+    .switch-slider input { opacity: 0; width: 0; height: 0; }
+    .slider-round {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 34px;
+      border: 1px solid #475569;
+    }
+    .slider-round:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #38bdf8;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider-round { background-color: #0284c7; }
+    input:checked + .slider-round:before { transform: translateX(25px); background-color: #ffffff; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col select-none antialiased">
+
+  <!-- TOP HEADER -->
+  <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- App Brand & Developer Credit -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-cyan-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-sky-500/20">
+          <i class="fa-solid fa-stethoscope"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold bg-gradient-to-r from-sky-300 via-sky-100 to-cyan-300 bg-clip-text text-transparent leading-tight">
+            Medical Mandarin Companion
+          </h1>
+          <p class="text-[11px] text-sky-400 font-semibold flex items-center space-x-1">
+            <span>Developer: Nechama Borisute</span>
+            <span class="text-slate-600">•</span>
+            <span class="text-slate-400">104+ Deck Items (Sessions 1–4)</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Audio Slider & Speed Switch -->
+      <div class="flex items-center space-x-3 text-xs">
+        
+        <!-- AUDIO ENGINE TOGGLE SLIDER SWITCH -->
+        <div class="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-2xl border border-slate-800">
+          <span id="labelTTS" class="text-[11px] font-bold text-sky-400 flex items-center space-x-1">
+            <i class="fa-solid fa-robot"></i>
+            <span class="hidden sm:inline">Default TTS</span>
+          </span>
+          
+          <label class="switch-slider">
+            <input type="checkbox" id="audioSourceToggle" onchange="toggleAudioEngine(this.checked)">
+            <span class="slider-round"></span>
+          </label>
+          
+          <span id="labelGitHub" class="text-[11px] font-bold text-slate-500 flex items-center space-x-1">
+            <i class="fa-solid fa-folder-open"></i>
+            <span class="hidden sm:inline">GitHub Audio</span>
+          </span>
+        </div>
+
+        <!-- Optional Manual File Drag/Upload Button -->
+        <label id="uploadAudioBtn" class="hidden cursor-pointer bg-slate-800 hover:bg-slate-700 text-sky-300 px-2.5 py-1.5 rounded-xl border border-slate-700 text-[11px] font-bold transition items-center space-x-1">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span class="hidden sm:inline">Local Upload</span>
+          <input type="file" id="localAudioInput" multiple accept="audio/*" class="hidden" onchange="handleBatchAudioUpload(event)">
+        </label>
+
+        <!-- Speed Dropdown -->
+        <div class="flex items-center bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800">
+          <i class="fa-solid fa-gauge-high text-sky-400 mr-1.5 text-xs"></i>
+          <select id="playbackSpeed" onchange="setPlaybackSpeed(this.value)" class="bg-transparent text-sky-300 font-bold focus:outline-none cursor-pointer text-xs">
+            <option value="0.75">0.75x</option>
+            <option value="0.85" selected>0.85x</option>
+            <option value="1.0">1.0x</option>
+          </select>
+        </div>
+
+        <!-- Reset Progress -->
+        <button onclick="resetSRSProgress()" title="Reset Study Progress" class="p-2 rounded-xl bg-slate-800 hover:bg-red-950 text-slate-400 hover:text-red-400 border border-slate-700 transition">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- METRICS & NAVIGATION BAR -->
+  <section class="bg-slate-900/60 border-b border-slate-800 px-4 py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Metrics Pills -->
+      <div class="grid grid-cols-4 gap-2 text-center text-xs w-full lg:w-auto">
+        <div class="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+          <div class="text-[9px] text-slate-500 uppercase font-bold">Total Terms</div>
+          <div id="statTotal" class="font-black text-white text-sm">104</div>
+        </div>
+        <div class="bg-red-950/40 px-3 py-1.5 rounded-xl border border-red-900/50">
+          <div class="text-[9px] text-red-400 uppercase font-bold">Box 1 (New)</div>
+          <div id="statBox1" class="font-black text-red-300 text-sm">0</div>
+        </div>
+        <div class="bg-amber-950/40 px-3 py-1.5 rounded-xl border border-amber-900/50">
+          <div class="text-[9px] text-amber-400 uppercase font-bold">Box 2-3 (Review)</div>
+          <div id="statBox23" class="font-black text-amber-300 text-sm">0</div>
+        </div>
+        <div class="bg-emerald-950/40 px-3 py-1.5 rounded-xl border border-emerald-900/50">
+          <div class="text-[9px] text-emerald-400 uppercase font-bold">Box 4-5 (Mastered)</div>
+          <div id="statBox45" class="font-black text-emerald-300 text-sm">0</div>
+        </div>
+      </div>
+
+      <!-- App View Tabs -->
+      <nav class="flex items-center bg-slate-950 p-1 rounded-2xl border border-slate-800 w-full lg:w-auto overflow-x-auto no-scrollbar">
+        <button onclick="switchTab('flashcards')" id="tab-flashcards" class="tab-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-layer-group text-sky-400"></i>
+          <span>Flashcards</span>
+        </button>
+        <button onclick="switchTab('quiz')" id="tab-quiz" class="tab-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-vial-circle-check text-cyan-400"></i>
+          <span>Quiz</span>
+        </button>
+        <button onclick="switchTab('listening')" id="tab-listening" class="tab-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-headphones text-purple-400"></i>
+          <span>Listening Lab</span>
+        </button>
+        <button onclick="switchTab('scenarios')" id="tab-scenarios" class="tab-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-comments text-emerald-400"></i>
+          <span>Vignettes</span>
+        </button>
+        <button onclick="switchTab('grammar')" id="tab-grammar" class="tab-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-pen-ruler text-amber-400"></i>
+          <span>Grammar</span>
+        </button>
+        <button onclick="switchTab('index')" id="tab-index" class="tab-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-book-bookmark text-blue-400"></i>
+          <span>Vocab Index</span>
+        </button>
+      </nav>
+
+    </div>
+  </section>
+
+  <!-- MAIN APPLICATION CONTENT AREA -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+
+    <!-- Toast Notification Banner -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-sky-300 border border-sky-500/40 px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 pointer-events-none">
+      <i id="toastIcon" class="fa-solid fa-circle-check text-sky-400 text-lg"></i>
+      <span id="toastMsg" class="text-xs font-semibold">Notification</span>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: FLASHCARDS (LEITNER SRS SYSTEM)     -->
+    <!-- ========================================== -->
+    <div id="view-flashcards" class="tab-content space-y-4">
+      
+      <!-- Search & Category Filters -->
+      <div class="space-y-3 bg-slate-900/50 p-3.5 rounded-3xl border border-slate-800">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+          <input type="text" id="flashcardSearch" oninput="filterFlashcards()" placeholder="Search terms (e.g. fever, 肚子, hso)..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-9 pr-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500">
+        </div>
+
+        <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1" id="categoryChips">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- 3D FLASHCARD CONTAINER -->
+      <div class="max-w-xl mx-auto w-full">
+        <div class="perspective-1000 w-full h-[370px] sm:h-[400px] cursor-pointer group" onclick="flipCard()">
+          <div id="cardInner" class="relative w-full h-full duration-500 transform-style-3d transition-transform-500 rounded-3xl shadow-2xl">
+            
+            <!-- CARD FRONT -->
+            <div class="absolute inset-0 w-full h-full backface-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border-2 border-slate-800 group-hover:border-sky-500/60 rounded-3xl p-6 sm:p-8 flex flex-col justify-between items-center text-center shadow-xl">
+              <div class="w-full flex items-center justify-between text-xs">
+                <span id="cardCategoryFront" class="bg-sky-950 text-sky-300 px-3 py-1 rounded-full font-bold border border-sky-800/40">Category</span>
+                <span id="cardBoxFront" class="bg-slate-950 px-3 py-1 rounded-full text-slate-400 font-bold border border-slate-800">Box 1</span>
+              </div>
+
+              <div class="space-y-3 my-auto">
+                <div class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Translate to Chinese</div>
+                <div id="cardEnglish" class="text-2xl sm:text-3xl font-extrabold text-white tracking-wide">
+                  English Term
+                </div>
+                <p id="cardNotes" class="text-xs text-slate-400 italic max-w-sm mx-auto">
+                  Slide context notes
+                </p>
+              </div>
+
+              <div class="w-full flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+                <span class="flex items-center space-x-1">
+                  <i class="fa-solid fa-arrows-rotate"></i>
+                  <span>Tap card to flip</span>
+                </span>
+                <button onclick="event.stopPropagation(); playCurrentCardAudio()" class="p-2.5 rounded-full bg-sky-500/20 text-sky-300 hover:bg-sky-500 hover:text-slate-950 transition">
+                  <i class="fa-solid fa-volume-high"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- CARD BACK -->
+            <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 border-2 border-sky-500/80 rounded-3xl p-6 sm:p-8 flex flex-col justify-between items-center text-center shadow-2xl">
+              <div class="w-full flex items-center justify-between text-xs text-sky-300">
+                <span id="cardCategoryBack" class="font-bold">Category</span>
+                <button onclick="event.stopPropagation(); playCurrentCardAudio()" class="px-3 py-1 rounded-full bg-sky-500 text-slate-950 font-black hover:bg-sky-400 transition flex items-center space-x-1.5 shadow">
+                  <i class="fa-solid fa-volume-high"></i>
+                  <span>Listen</span>
+                </button>
+              </div>
+
+              <div class="space-y-3 my-auto">
+                <div id="cardHanzi" class="text-4xl sm:text-5xl font-black text-sky-200 tracking-wider">
+                  中文
+                </div>
+                <div id="cardPinyin" class="text-lg sm:text-xl font-bold text-cyan-300 font-mono tracking-wide">
+                  pīnyīn
+                </div>
+                <div id="cardMeaning" class="text-xs text-slate-300 border-t border-slate-800/80 pt-2 max-w-xs mx-auto font-medium">
+                  English meaning
+                </div>
+              </div>
+
+              <div class="w-full text-[11px] text-slate-400 border-t border-slate-800/80 pt-3 flex items-center justify-center space-x-1.5">
+                <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                <span id="cardToneNote">Tone guide</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- LEITNER RECALL RATING BAR -->
+        <div class="mt-4 bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-xl space-y-2">
+          <div class="text-[10px] text-center text-slate-400 font-bold uppercase tracking-wider">
+            Rate Recall (Spaced Repetition Schedule)
+          </div>
+          <div class="grid grid-cols-4 gap-2">
+            <button onclick="rateSRS(1)" class="py-2 px-1 rounded-xl bg-red-950/80 border border-red-800/60 hover:bg-red-900 text-red-200 font-bold text-xs flex flex-col items-center transition">
+              <span>Again</span>
+              <span class="text-[9px] font-normal text-red-400">Box 1</span>
+            </button>
+            <button onclick="rateSRS(2)" class="py-2 px-1 rounded-xl bg-amber-950/80 border border-amber-800/60 hover:bg-amber-900 text-amber-200 font-bold text-xs flex flex-col items-center transition">
+              <span>Hard</span>
+              <span class="text-[9px] font-normal text-amber-400">Box -1</span>
+            </button>
+            <button onclick="rateSRS(3)" class="py-2 px-1 rounded-xl bg-sky-950/80 border border-sky-800/60 hover:bg-sky-900 text-sky-200 font-bold text-xs flex flex-col items-center transition">
+              <span>Good</span>
+              <span class="text-[9px] font-normal text-sky-400">Box +1</span>
+            </button>
+            <button onclick="rateSRS(4)" class="py-2 px-1 rounded-xl bg-emerald-950/80 border border-emerald-800/60 hover:bg-emerald-900 text-emerald-200 font-bold text-xs flex flex-col items-center transition">
+              <span>Easy</span>
+              <span class="text-[9px] font-normal text-emerald-400">Box +2</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Navigation Controls -->
+        <div class="flex items-center justify-between mt-3 text-xs">
+          <button onclick="prevCard()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold border border-slate-800 transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-chevron-left"></i>
+            <span>Prev</span>
+          </button>
+          <span id="cardCounter" class="text-slate-400 font-mono font-bold">1 / 104</span>
+          <button onclick="nextCard()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold border border-slate-800 transition flex items-center space-x-1.5">
+            <span>Next</span>
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: MULTIPLE CHOICE QUIZ MODE           -->
+    <!-- ========================================== -->
+    <div id="view-quiz" class="tab-content hidden max-w-2xl mx-auto w-full space-y-5">
+      <div class="bg-slate-900/80 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-5">
+        
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-vial-circle-check text-cyan-400"></i>
+              <span>Medical Chinese Quiz</span>
+            </h2>
+            <p class="text-xs text-slate-400">Test clinical Chinese term recognition</p>
+          </div>
+          <div class="flex items-center space-x-4 font-mono">
+            <div class="text-center">
+              <div class="text-[9px] text-slate-500 uppercase font-bold">Score</div>
+              <div id="quizScore" class="text-base font-extrabold text-sky-300">0</div>
+            </div>
+            <div class="text-center">
+              <div class="text-[9px] text-slate-500 uppercase font-bold">Streak</div>
+              <div id="quizStreak" class="text-base font-extrabold text-amber-400">0 🔥</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center py-2 space-y-3">
+          <span id="quizCategoryBadge" class="bg-sky-950 text-sky-300 text-[10px] font-bold px-3 py-1 rounded-full border border-sky-800/40">Category</span>
+          <div id="quizPrompt" class="text-2xl font-extrabold text-white">Question Prompt</div>
+          <button onclick="playQuizAudio()" class="mx-auto px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-bold flex items-center space-x-1.5 border border-slate-700">
+            <i class="fa-solid fa-volume-high"></i>
+            <span>Listen Audio</span>
+          </button>
+        </div>
+
+        <div id="quizOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+        <div id="quizFeedback" class="hidden p-3 rounded-xl text-center font-bold text-xs transition"></div>
+        <button id="btnNextQuiz" onclick="generateQuizQuestion()" class="hidden w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-400 hover:to-cyan-400 text-slate-950 font-bold text-xs shadow-lg transition">
+          Next Question <i class="fa-solid fa-arrow-right ml-1"></i>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: LISTENING LAB                       -->
+    <!-- ========================================== -->
+    <div id="view-listening" class="tab-content hidden max-w-xl mx-auto w-full space-y-5">
+      <div class="bg-slate-900/80 p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl space-y-6 text-center">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-headphones text-purple-400"></i>
+            <span>Clinical Listening Comprehension</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Listen to spoken Mandarin phrases without text prompts</p>
+        </div>
+
+        <div class="py-4">
+          <button onclick="playListeningAudio()" class="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-purple-950 mx-auto flex flex-col items-center justify-center text-white">
+            <i class="fa-solid fa-play text-2xl ml-1"></i>
+            <span class="text-[9px] uppercase font-bold tracking-widest mt-1">Play</span>
+          </button>
+        </div>
+
+        <div id="listeningAnswerBox" class="hidden bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2">
+          <div id="listeningHanzi" class="text-3xl font-black text-sky-300">中文</div>
+          <div id="listeningPinyin" class="text-base font-mono text-cyan-300">pīnyīn</div>
+          <div id="listeningEnglish" class="text-xs font-semibold text-white">English Meaning</div>
+        </div>
+
+        <div class="flex items-center justify-center space-x-3">
+          <button id="btnRevealListening" onclick="revealListeningAnswer()" class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition shadow-md">
+            <i class="fa-solid fa-eye mr-1.5"></i> Reveal Answer
+          </button>
+          <button onclick="nextListeningItem()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition border border-slate-700">
+            Next Audio <i class="fa-solid fa-chevron-right ml-1"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: CLINICAL VIGNETTES & ROLEPLAYS      -->
+    <!-- ========================================== -->
+    <div id="view-scenarios" class="tab-content hidden space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/50 p-4 rounded-3xl border border-slate-800">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-comments text-emerald-400"></i>
+            <span>Clinical Vignettes & Practice Dialogues</span>
+          </h2>
+          <p class="text-xs text-slate-400">Interactive multi-turn clinical roleplays from Sessions 1–4</p>
+        </div>
+
+        <select id="scenarioSelect" onchange="loadScenario(this.value)" class="bg-slate-950 border border-slate-800 text-sky-300 text-xs rounded-xl px-3.5 py-2 font-bold focus:outline-none">
+          <option value="0">Scenario 1: Greeting & Escorting Patient</option>
+          <option value="1">Scenario 2: Interpreter Request & Nurse Entry</option>
+          <option value="2">Scenario 3: 60yo Female Headache (CC & HPI)</option>
+          <option value="3">Scenario 4: 45yo Male Back Pain (Guided Breakout)</option>
+          <option value="4">Scenario 5: 65yo Female PMH, FH, & SH Workup</option>
+        </select>
+      </div>
+
+      <div class="max-w-3xl mx-auto bg-slate-950 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl flex flex-col h-[520px]">
+        <div class="bg-slate-900/90 px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
+          <div>
+            <div id="scenarioTitle" class="font-bold text-xs text-white">Scenario Title</div>
+            <div id="scenarioContext" class="text-[11px] text-slate-400">Context description</div>
+          </div>
+          <button onclick="playFullDialogueSequence()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs transition flex items-center space-x-1">
+            <i class="fa-solid fa-play"></i>
+            <span>Play Sequence</span>
+          </button>
+        </div>
+
+        <div id="dialogueStream" class="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3"></div>
+
+        <div class="bg-slate-900/80 p-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <div class="flex items-center space-x-4">
+            <label class="flex items-center space-x-1.5 cursor-pointer">
+              <input type="checkbox" id="togglePinyinDialogue" checked onchange="renderDialogue()" class="rounded bg-slate-950 border-slate-800 text-sky-500">
+              <span>Show Pinyin</span>
+            </label>
+            <label class="flex items-center space-x-1.5 cursor-pointer">
+              <input type="checkbox" id="toggleEnglishDialogue" checked onchange="renderDialogue()" class="rounded bg-slate-950 border-slate-800 text-sky-500">
+              <span>Show English</span>
+            </label>
+          </div>
+          <div class="text-[10px] text-slate-500 hidden sm:block">Click any bubble to pronounce</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: CLINICAL GRAMMAR RULES              -->
+    <!-- ========================================== -->
+    <div id="view-grammar" class="tab-content hidden space-y-4 max-w-4xl mx-auto w-full">
+      <div class="bg-slate-900/80 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-6">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-pen-ruler text-amber-400"></i>
+            <span>Chinese Clinical Grammar Rules (Session #3)</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Core sentence structures used across medical history taking</p>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <div class="font-bold text-sky-300 text-sm">1. Time When Structure</div>
+            <div class="font-mono bg-slate-900 p-2 rounded-xl text-amber-300 border border-slate-800">
+              Subject + Time (when) + Verb + Object  OR  Time + Subject + Verb + Object
+            </div>
+            <div class="text-slate-300"><strong class="text-white">Example:</strong> 我早上九点会去看医生。(Wǒ zǎoshang jiǔ diǎn huì qù kàn yīshēng.)</div>
+            <div class="text-slate-400 italic">"I will see the doctor at 9am."</div>
+          </div>
+
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <div class="font-bold text-sky-300 text-sm">2. Time When + Location Structure</div>
+            <div class="font-mono bg-slate-900 p-2 rounded-xl text-amber-300 border border-slate-800">
+              Subject + Time (when) + Location + Verb + Object
+            </div>
+            <div class="text-slate-300"><strong class="text-white">Example:</strong> 我礼拜五在医院看病人。(Wǒ lǐbài wǔ zài yīyuàn kàn bìngrén.)</div>
+            <div class="text-slate-400 italic">"I see patients in the hospital on Friday."</div>
+          </div>
+
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <div class="font-bold text-sky-300 text-sm">3. Time Duration Structure</div>
+            <div class="font-mono bg-slate-900 p-2 rounded-xl text-amber-300 border border-slate-800">
+              Subject + Verb + Time (Duration)
+            </div>
+            <div class="text-slate-300"><strong class="text-white">Example:</strong> 我讲了三个小时。(Wǒ jiǎngle sān gè xiǎoshí.)</div>
+            <div class="text-slate-400 italic">"I talked for 3 hours."</div>
+          </div>
+
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <div class="font-bold text-sky-300 text-sm">4. Giving Directions</div>
+            <div class="font-mono bg-slate-900 p-2 rounded-xl text-amber-300 border border-slate-800">
+              Subject + 在 + Direction
+            </div>
+            <div class="text-slate-300"><strong class="text-white">Example:</strong> 医院在左边。(Yīyuàn zài zuǒbiān.)</div>
+            <div class="text-slate-400 italic">"The hospital is on the left."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 6: SEARCHABLE VOCABULARY INDEX         -->
+    <!-- ========================================== -->
+    <div id="view-index" class="tab-content hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/50 p-3.5 rounded-3xl border border-slate-800">
+        <div class="relative flex-1 min-w-[220px]">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+          <input type="text" id="vocabSearch" oninput="renderVocabIndex()" placeholder="Filter full dictionary..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-9 pr-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500">
+        </div>
+
+        <select id="vocabCatFilter" onchange="renderVocabIndex()" class="bg-slate-950 border border-slate-800 text-sky-300 text-xs rounded-xl px-3.5 py-2 font-bold focus:outline-none">
+          <option value="All">All Categories</option>
+        </select>
+      </div>
+
+      <div class="bg-slate-900/80 rounded-3xl border border-slate-800 overflow-hidden shadow-xl">
+        <div class="max-h-[520px] overflow-y-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-950/90 text-slate-400 uppercase sticky top-0 border-b border-slate-800 font-bold">
+              <tr>
+                <th class="p-3 sm:p-4">Hanzi</th>
+                <th class="p-3 sm:p-4">Pinyin</th>
+                <th class="p-3 sm:p-4">English</th>
+                <th class="p-3 sm:p-4 hidden md:table-cell">Category</th>
+                <th class="p-3 sm:p-4 text-center">Audio</th>
+                <th class="p-3 sm:p-4 text-center">SRS Box</th>
+              </tr>
+            </thead>
+            <tbody id="vocabTableBody" class="divide-y divide-slate-800/60 text-slate-200"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- APP FOOTER -->
+  <footer class="bg-slate-950 border-t border-slate-800/80 py-4 text-center text-xs text-slate-500 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>
+        <strong class="text-sky-400">Medical Mandarin Companion</strong> &bull; Developed by <span class="text-slate-300 font-bold">Nechama Borisute</span>
+      </div>
+      <div class="text-[11px] text-slate-600">
+        Credits: Woody, Matthew, Cindy & Albert (Sessions 1–4)
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    // =========================================================================
+    // 104+ COMPREHENSIVE VOCABULARY DECK (SESSIONS 1, 2, 3, & 4)
+    // =========================================================================
+    const ALL_CATEGORIES = [
+      "All",
+      "Pinyin & Basics",
+      "Greetings & Courtesy",
+      "Patient Intro & Roles",
+      "Body Parts",
+      "Question Structure & Time",
+      "Chief Complaint & HPI",
+      "Pain Scale & Description",
+      "Review of Systems (ROS)",
+      "PMH & Chronic Illnesses",
+      "Family & Social History"
+    ];
+
+    const VOCAB_DATA = [
+      // Pinyin & Pronunciation (Session 1)
+      { id: "v001", category: "Pinyin & Basics", hanzi: "a, o, e, i, u, ü", pinyin: "a, o, e, i, u, ü", english: "Single Vowels (father, frog, bird, east, rule, go)", notes: "Basic Mandarin vowels", audioKey: "vowels" },
+      { id: "v002", category: "Pinyin & Basics", hanzi: "ai, ei, ui, ao, ou", pinyin: "ai, ei, ui, ao, ou", english: "Compound Vowels (eye, hey, wei, ow, so)", notes: "Compound vowels", audioKey: "compound_vowels" },
+      { id: "v003", category: "Pinyin & Basics", hanzi: "哥哥", pinyin: "Gēge", english: "Older brother", notes: "1st tone + neutral tone", audioKey: "older_brother" },
+      { id: "v004", category: "Pinyin & Basics", hanzi: "苹果", pinyin: "Píngguǒ", english: "Apple", notes: "2nd tone + 3rd tone", audioKey: "apple" },
+      { id: "v005", category: "Pinyin & Basics", hanzi: "火锅", pinyin: "Huǒguō", english: "Hot pot", notes: "3rd tone + 1st tone", audioKey: "hot_pot" },
+      { id: "v006", category: "Pinyin & Basics", hanzi: "爸爸", pinyin: "Bàba", english: "Dad", notes: "4th tone + neutral tone", audioKey: "dad" },
+      
+      // Pronouns & Demonstratives (Session 1)
+      { id: "v007", category: "Pinyin & Basics", hanzi: "我 / 我们", pinyin: "Wǒ / Wǒ men", english: "I, me / We, us", notes: "1st person pronouns", audioKey: "i_we" },
+      { id: "v008", category: "Pinyin & Basics", hanzi: "你 / 你们", pinyin: "Nǐ / Nǐ men", english: "You (singular / plural)", notes: "2nd person pronouns", audioKey: "you_plural" },
+      { id: "v009", category: "Pinyin & Basics", hanzi: "他 / 她 / 它", pinyin: "Tā / Tā / Tā", english: "He / She / It", notes: "3rd person pronouns", audioKey: "he_she_it" },
+      { id: "v010", category: "Pinyin & Basics", hanzi: "他们", pinyin: "Tā men", english: "They / Them", notes: "3rd person plural", audioKey: "they" },
+      { id: "v011", category: "Pinyin & Basics", hanzi: "这个 / 这位", pinyin: "Zhè gè / Zhè wèi", english: "This / This person", notes: "位 is respectful measure word", audioKey: "this_person" },
+      { id: "v012", category: "Pinyin & Basics", hanzi: "那个 / 那位", pinyin: "Nà gè / Nà wèi", english: "That / That person", notes: "Demonstratives", audioKey: "that_person" },
+      { id: "v013", category: "Pinyin & Basics", hanzi: "这里 / 那里", pinyin: "Zhè lǐ / Nà lǐ", english: "Here / There", notes: "Location demonstratives", audioKey: "here_there" },
+      { id: "v014", category: "Pinyin & Basics", hanzi: "先生 / 小姐", pinyin: "Xiān shēng / Xiǎojiě", english: "Mr. / Miss", notes: "Polite titles", audioKey: "mr_miss" },
+
+      // Greetings & Courtesy (Sessions 1 & 2)
+      { id: "v015", category: "Greetings & Courtesy", hanzi: "你好", pinyin: "Nǐ hǎo", english: "Hello", notes: "Standard greeting", audioKey: "hello" },
+      { id: "v016", category: "Greetings & Courtesy", hanzi: "早上好", pinyin: "Zǎo shàng hǎo", english: "Good morning", notes: "Morning greeting", audioKey: "good_morning" },
+      { id: "v017", category: "Greetings & Courtesy", hanzi: "你好吗", pinyin: "Nǐ hǎo ma", english: "How are you?", notes: "Question format", audioKey: "how_are_you" },
+      { id: "v018", category: "Greetings & Courtesy", hanzi: "我叫...", pinyin: "Wǒ jiào...", english: "My name is...", notes: "Self-introduction", audioKey: "my_name_is" },
+      { id: "v019", category: "Greetings & Courtesy", hanzi: "是 / 不是", pinyin: "Shì / Bù shì", english: "Yes / No", notes: "Affirmative / Negative", audioKey: "yes_no" },
+      { id: "v020", category: "Greetings & Courtesy", hanzi: "可能", pinyin: "Kě néng", english: "Maybe", notes: "Possibility", audioKey: "maybe" },
+      { id: "v021", category: "Greetings & Courtesy", hanzi: "好", pinyin: "Hǎo", english: "Okay / Good", notes: "Agreement", audioKey: "okay" },
+      { id: "v022", category: "Greetings & Courtesy", hanzi: "谢谢", pinyin: "Xiè xiè", english: "Thank you", notes: "Gratitude", audioKey: "thank_you" },
+      { id: "v023", category: "Greetings & Courtesy", hanzi: "对不起", pinyin: "Duì bù qǐ", english: "Sorry / Excuse me", notes: "Apology", audioKey: "sorry" },
+      { id: "v024", category: "Greetings & Courtesy", hanzi: "不客气", pinyin: "Bú kè qì", english: "You are welcome", notes: "Response to thank you", audioKey: "you_are_welcome" },
+      { id: "v025", category: "Greetings & Courtesy", hanzi: "我不知道", pinyin: "Wǒ bù zhī dào", english: "I don't know", notes: "Uncertainty", audioKey: "i_dont_know" },
+      { id: "v026", category: "Greetings & Courtesy", hanzi: "稍等（一下）", pinyin: "Shāo děng (yīxià)", english: "Please wait a moment", notes: "Polite waiting instruction", audioKey: "please_wait" },
+      { id: "v027", category: "Greetings & Courtesy", hanzi: "再见", pinyin: "Zài jiàn", english: "Goodbye", notes: "Farewell", audioKey: "goodbye" },
+      { id: "v028", category: "Greetings & Courtesy", hanzi: "慢走", pinyin: "Màn zǒu", english: "Take care (Walk slowly)", notes: "Polite farewell to departing patient", audioKey: "take_care" },
+
+      // Patient Intro & Clinical Roles (Sessions 1 & 2)
+      { id: "v029", category: "Patient Intro & Roles", hanzi: "我是...", pinyin: "Wǒ shì...", english: "I am a...", notes: "Role statement", audioKey: "i_am_a" },
+      { id: "v030", category: "Patient Intro & Roles", hanzi: "医生", pinyin: "yī shēng", english: "Doctor", notes: "Physician", audioKey: "doctor" },
+      { id: "v031", category: "Patient Intro & Roles", hanzi: "医学生", pinyin: "yī xuéshēng", english: "Medical student", notes: "Medical trainee", audioKey: "medical_student" },
+      { id: "v032", category: "Patient Intro & Roles", hanzi: "护士", pinyin: "hùshì", english: "Nurse", notes: "Nursing staff", audioKey: "nurse" },
+      { id: "v033", category: "Patient Intro & Roles", hanzi: "护士学生", pinyin: "hùshì xuéshēng", english: "Nursing student", notes: "Nursing trainee", audioKey: "nursing_student" },
+      { id: "v034", category: "Patient Intro & Roles", hanzi: "医生助理", pinyin: "Yīshēng zhùlǐ", english: "Physician Assistant", notes: "PA profession", audioKey: "physician_assistant" },
+      { id: "v035", category: "Patient Intro & Roles", hanzi: "医生助理学生", pinyin: "Yīshēng zhùlǐ xuéshēng", english: "PA student", notes: "PA trainee", audioKey: "pa_student" },
+      { id: "v036", category: "Patient Intro & Roles", hanzi: "公共卫生学生", pinyin: "gōnggòng wèishēng xuéshēng", english: "Public Health Student", notes: "MPH student", audioKey: "public_health_student" },
+      { id: "v037", category: "Patient Intro & Roles", hanzi: "博士后", pinyin: "bóshìhòu", english: "Post Doc", notes: "Postdoctoral researcher", audioKey: "post_doc" },
+      { id: "v038", category: "Patient Intro & Roles", hanzi: "病人", pinyin: "Bìngrén", english: "Patient", notes: "Patient seeking care", audioKey: "patient" },
+      { id: "v039", category: "Patient Intro & Roles", hanzi: "义工", pinyin: "yìgōng", english: "Volunteer", notes: "Clinic volunteer", audioKey: "volunteer" },
+      { id: "v040", category: "Patient Intro & Roles", hanzi: "你叫什么？ / 您叫什么？", pinyin: "Nǐ / Nín jiào shén me?", english: "What is your name? (informal / polite)", notes: "Name prompt", audioKey: "what_is_your_name" },
+      { id: "v041", category: "Patient Intro & Roles", hanzi: "我会说一点中文", pinyin: "Wǒ huì shuō yīdiǎn zhōngwén", english: "I speak a little Chinese", notes: "Intro set phrase", audioKey: "i_speak_a_little_chinese" },
+      { id: "v042", category: "Patient Intro & Roles", hanzi: "不好意思让你久等了", pinyin: "Bù hǎo yì si ràng nǐ jiǔ děng le", english: "Sorry to keep you waiting", notes: "Apology for delay", audioKey: "sorry_to_keep_you_waiting" },
+      { id: "v043", category: "Patient Intro & Roles", hanzi: "跟我来", pinyin: "Gēn wǒ lái", english: "Follow me", notes: "Escorting patient", audioKey: "follow_me" },
+      { id: "v044", category: "Patient Intro & Roles", hanzi: "请坐", pinyin: "Qǐng zuò", english: "Please take a seat", notes: "Seating instruction", audioKey: "please_take_a_seat" },
+      { id: "v045", category: "Patient Intro & Roles", hanzi: "你讲中文吗?", pinyin: "Nǐ jiǎng zhōng wén ma?", english: "Do you speak Mandarin?", notes: "Language check", audioKey: "do_you_speak_mandarin" },
+      { id: "v046", category: "Patient Intro & Roles", hanzi: "翻译 / 让我找翻译人", pinyin: "Fān yì / Ràng wǒ zhǎo fān yì rén", english: "Interpreter / Let me find a translator", notes: "Language assistance", audioKey: "interpreter" },
+
+      // Body Parts 1 & 2 (Sessions 2 & 3)
+      { id: "v047", category: "Body Parts", hanzi: "头 / 头发", pinyin: "Tóu / Tóu fǎ", english: "Head / Hair", notes: "Head area", audioKey: "head_hair" },
+      { id: "v048", category: "Body Parts", hanzi: "脸", pinyin: "Liǎn", english: "Face", notes: "Facial area", audioKey: "face" },
+      { id: "v049", category: "Body Parts", hanzi: "眼睛", pinyin: "Yǎn jīng", english: "Eye", notes: "Ocular", audioKey: "eye" },
+      { id: "v050", category: "Body Parts", hanzi: "耳朵", pinyin: "Ěr duo", english: "Ear", notes: "Auditory", audioKey: "ear" },
+      { id: "v051", category: "Body Parts", hanzi: "鼻子", pinyin: "Bí zi", english: "Nose", notes: "Nasal", audioKey: "nose" },
+      { id: "v052", category: "Body Parts", hanzi: "嘴巴 / 牙齿", pinyin: "Zuǐ bā / Yá chǐ", english: "Mouth / Teeth", notes: "Oral cavity", audioKey: "mouth_teeth" },
+      { id: "v053", category: "Body Parts", hanzi: "脖子", pinyin: "Bó zi", english: "Neck", notes: "Cervical", audioKey: "neck" },
+      { id: "v054", category: "Body Parts", hanzi: "肩膀", pinyin: "Jiān bǎng", english: "Shoulder", notes: "Deltoid", audioKey: "shoulder" },
+      { id: "v055", category: "Body Parts", hanzi: "手臂 / 手", pinyin: "Shǒu bì / Shǒu", english: "Arm / Hand", notes: "Upper extremity", audioKey: "arm_hand" },
+      { id: "v056", category: "Body Parts", hanzi: "胸部", pinyin: "Xiōng bù", english: "Chest", notes: "Thoracic", audioKey: "chest" },
+      { id: "v057", category: "Body Parts", hanzi: "肺", pinyin: "Fèi", english: "Lung", notes: "Pulmonary", audioKey: "lung" },
+      { id: "v058", category: "Body Parts", hanzi: "心脏", pinyin: "Xīn zàng", english: "Heart", notes: "Cardiac", audioKey: "heart" },
+      { id: "v059", category: "Body Parts", hanzi: "肚子", pinyin: "Dù zi", english: "Belly / Stomach", notes: "Abdominal", audioKey: "belly_stomach" },
+      { id: "v060", category: "Body Parts", hanzi: "背", pinyin: "Bèi", english: "Back", notes: "Dorsal", audioKey: "back" },
+      { id: "v061", category: "Body Parts", hanzi: "腿", pinyin: "Tuǐ", english: "Leg", notes: "Lower extremity", audioKey: "leg" },
+      { id: "v062", category: "Body Parts", hanzi: "膝盖", pinyin: "Xī gài", english: "Knee", notes: "Patellar", audioKey: "knee" },
+      { id: "v063", category: "Body Parts", hanzi: "脚 / 脚踝", pinyin: "Jiǎo / Jiǎo huái", english: "Foot / Ankle", notes: "Podiatric", audioKey: "foot_ankle" },
+
+      // Question Structure & Time Words (Sessions 2 & 3)
+      { id: "v064", category: "Question Structure & Time", hanzi: "为什么", pinyin: "Wèi Shén me", english: "Why / What for", notes: "Question word", audioKey: "why" },
+      { id: "v065", category: "Question Structure & Time", hanzi: "谁", pinyin: "Shéi", english: "Who", notes: "Question word", audioKey: "who" },
+      { id: "v066", category: "Question Structure & Time", hanzi: "什么时候", pinyin: "Shén me shí hòu", english: "When / What time", notes: "Temporal question", audioKey: "when" },
+      { id: "v067", category: "Question Structure & Time", hanzi: "哪里", pinyin: "Nǎ lǐ", english: "Where", notes: "Location question", audioKey: "where" },
+      { id: "v068", category: "Question Structure & Time", hanzi: "一秒钟 / 一分钟 / 两分钟", pinyin: "Yī miǎo / Yī fēn / Liǎng fēn", english: "1 sec / 1 min / 2 mins", notes: "Use 两 for counting 2", audioKey: "sec_min" },
+      { id: "v069", category: "Question Structure & Time", hanzi: "一小时 / 一天", pinyin: "Yī xiǎo shí / Yī tiān", english: "1 hour / 1 day", notes: "Duration", audioKey: "hour_day" },
+      { id: "v070", category: "Question Structure & Time", hanzi: "一周 / 周末", pinyin: "Yī zhōu / Zhōumò", english: "1 week / Weekend", notes: "Time units", audioKey: "week_weekend" },
+      { id: "v071", category: "Question Structure & Time", hanzi: "上周 / 这周 / 下周", pinyin: "Shàng / Zhè / Xià zhōu", english: "Last week / This week / Next week", notes: "Relative weeks", audioKey: "weeks" },
+      { id: "v072", category: "Question Structure & Time", hanzi: "一月 / 一年", pinyin: "Yī yuè / Yī nián", english: "1 month / 1 year", notes: "Duration", audioKey: "month_year" },
+      { id: "v073", category: "Question Structure & Time", hanzi: "现在 / 今天 / 昨天 / 明天", pinyin: "Xiànzài / Jīntiān / Zuótiān / Míngtiān", english: "Now / Today / Yesterday / Tomorrow", notes: "Relative days", audioKey: "days" },
+      { id: "v074", category: "Question Structure & Time", hanzi: "早上 / 中午 / 下午 / 晚上", pinyin: "Zǎoshang / Zhōngwǔ / Xiàwǔ / Wǎnshàng", english: "Morning / Noon / Afternoon / Night", notes: "Time of day", audioKey: "time_of_day" },
+      { id: "v075", category: "Question Structure & Time", hanzi: "早上七点", pinyin: "Zǎo shàng qī diǎn", english: "7:00 AM", notes: "Specific time", audioKey: "7am" },
+      { id: "v076", category: "Question Structure & Time", hanzi: "下午三点半", pinyin: "Xià wǔ sān diǎn bàn", english: "3:30 PM", notes: "Specific time", audioKey: "330pm" },
+      { id: "v077", category: "Question Structure & Time", hanzi: "晚上八点", pinyin: "Wǎn shàng bā diǎn", english: "8:00 PM", notes: "Specific time", audioKey: "8pm" },
+
+      // Chief Complaint & HPI (Sessions 3 & 4)
+      { id: "v078", category: "Chief Complaint & HPI", hanzi: "你为什么来看医生？", pinyin: "Nǐ wèi shén me lái kàn yī shēng?", english: "Why are you coming to see the doctor?", notes: "CC prompt", audioKey: "why_see_doctor" },
+      { id: "v079", category: "Chief Complaint & HPI", hanzi: "哪里痛？", pinyin: "Nǎ lǐ tòng?", english: "Where is your pain?", notes: "Pain location", audioKey: "where_is_pain" },
+      { id: "v080", category: "Chief Complaint & HPI", hanzi: "什么时候开始？", pinyin: "Shén me shí hòu kāi shǐ?", english: "When did it start?", notes: "Onset", audioKey: "when_did_it_start" },
+      { id: "v081", category: "Chief Complaint & HPI", hanzi: "多久？三个月", pinyin: "Duō jiǔ? Sān gè yuè", english: "For how long? Three months", notes: "Duration", audioKey: "how_long_3_months" },
+      { id: "v082", category: "Chief Complaint & HPI", hanzi: "以前有痛吗？ / 现在还痛吗？", pinyin: "Yǐ qián yǒu tòng ma? / Xiàn zài hái tòng ma?", english: "Have you had this pain before? Still hurting now?", notes: "Prior / Current", audioKey: "pain_before_now" },
+      { id: "v083", category: "Chief Complaint & HPI", hanzi: "什么会加重你的痛？", pinyin: "Shén me huì jiā zhòng nǐ de tòng?", english: "What makes your pain worse?", notes: "Exacerbating factors", audioKey: "what_makes_pain_worse" },
+      { id: "v084", category: "Chief Complaint & HPI", hanzi: "什么会減少你的痛？", pinyin: "Shén me huì jiǎn shǎo nǐ de tòng?", english: "What makes your pain better?", notes: "Alleviating factors", audioKey: "what_makes_pain_better" },
+      { id: "v085", category: "Chief Complaint & HPI", hanzi: "走路 / 运动 / 咳嗽 / 吃东西", pinyin: "Zǒu lù / Yùn dòng / Ké sòu / Chī dōngxī", english: "Walk / Exercise / Cough / Eat", notes: "Aggravating factors", audioKey: "walk_exercise_cough_eat" },
+      { id: "v086", category: "Chief Complaint & HPI", hanzi: "不动 / 吃止痛药", pinyin: "Bú dòng / Chī zhǐ tòng yào", english: "Don't move / Take pain meds", notes: "Relieving factors", audioKey: "dont_move_pain_meds" },
+
+      // Pain Scale & Description (Session 3)
+      { id: "v087", category: "Pain Scale & Description", hanzi: "有多痛？", pinyin: "Yǒu duō tòng?", english: "How painful is it?", notes: "Severity", audioKey: "how_painful" },
+      { id: "v088", category: "Pain Scale & Description", hanzi: "从一到十，你有多痛？", pinyin: "Cóng yī dào shí, nǐ yǒu duō tòng?", english: "From 1 to 10, how much pain are you in?", notes: "1-10 scale", audioKey: "pain_scale_1_to_10" },
+      { id: "v089", category: "Pain Scale & Description", hanzi: "能指一指哪里痛吗？", pinyin: "Néng zhǐ yī zhǐ nǎ lǐ tòng ma?", english: "Could you point to where the pain is located?", notes: "Pointing instruction", audioKey: "point_to_where_it_hurts" },
+      { id: "v090", category: "Pain Scale & Description", hanzi: "这里痛", pinyin: "Zhè lǐ tòng", english: "It hurts right here", notes: "Patient response", audioKey: "it_hurts_here" },
+
+      // Review of Systems (ROS) (Sessions 3 & 4)
+      { id: "v091", category: "Review of Systems (ROS)", hanzi: "发烧", pinyin: "Fā shāo", english: "Fever", notes: "Constitutional", audioKey: "fever" },
+      { id: "v092", category: "Review of Systems (ROS)", hanzi: "呼吸困难", pinyin: "Hū xī kùn nán", english: "Difficulty breathing", notes: "Respiratory", audioKey: "difficulty_breathing" },
+      { id: "v093", category: "Review of Systems (ROS)", hanzi: "呕吐", pinyin: "Ǒu tù", english: "Vomit", notes: "GI symptom", audioKey: "vomit" },
+      { id: "v094", category: "Review of Systems (ROS)", hanzi: "流血", pinyin: "Liú xuě", english: "Bleeding", notes: "Hemorrhage", audioKey: "bleeding" },
+      { id: "v095", category: "Review of Systems (ROS)", hanzi: "累", pinyin: "Lèi", english: "Tired / Fatigue", notes: "Energy", audioKey: "tired" },
+      { id: "v096", category: "Review of Systems (ROS)", hanzi: "你有___吗？ / 你觉得___吗？", pinyin: "Nǐ yǒu ___ ma? / Nǐ jué dé ___ ma?", english: "Do you have ___? / Do you feel ___?", notes: "ROS queries", audioKey: "do_you_have_feel" },
+      { id: "v097", category: "Review of Systems (ROS)", hanzi: "有其他症状吗？", pinyin: "Yǒu qí tā zhèng zhuàng ma?", english: "Do you have other symptoms?", notes: "ROS catch-all", audioKey: "other_symptoms" },
+      { id: "v098", category: "Review of Systems (ROS)", hanzi: "最近重量有变吗？多少？", pinyin: "Zuì jìn zhòng liàng yǒu biàn ma? Duō shǎo?", english: "Has your weight changed recently? How much?", notes: "Weight change", audioKey: "weight_changed" },
+
+      // Past Medical & Family History (Session 4)
+      { id: "v099", category: "PMH & Chronic Illnesses", hanzi: "你以前有健康问题吗？", pinyin: "Nǐ yǐ qián yǒu jiàn kāng wèn tí ma?", english: "In the past, have you had health problems?", notes: "PMH query", audioKey: "past_health_problems" },
+      { id: "v100", category: "PMH & Chronic Illnesses", hanzi: "住院 / 意外 / 手术", pinyin: "Zhù yuàn / Yì wài / Shǒu shù", english: "Hospital admission / Accident / Surgery", notes: "PMH events", audioKey: "hospital_accident_surgery" },
+      { id: "v101", category: "PMH & Chronic Illnesses", hanzi: "你吃什么药？ / 你有过敏吗？", pinyin: "Nǐ chī shén me yào? / Nǐ yǒu guò mǐn ma?", english: "What medications do you take? Do you have allergies?", notes: "Meds & Allergies", audioKey: "meds_allergies" },
+      { id: "v102", category: "PMH & Chronic Illnesses", hanzi: "高血压", pinyin: "Gāo xuě yā", english: "Hypertension (High blood pressure)", notes: "Chronic illness", audioKey: "hypertension" },
+      { id: "v103", category: "PMH & Chronic Illnesses", hanzi: "糖尿病", pinyin: "Táng niào bìng", english: "Diabetes", notes: "Sugar urine disease", audioKey: "diabetes" },
+      { id: "v104", category: "PMH & Chronic Illnesses", hanzi: "高胆固醇 / 癌症", pinyin: "Gāo dǎn gù chún / Ái zhèng", english: "High cholesterol / Cancer", notes: "Chronic illnesses", audioKey: "cholesterol_cancer" },
+      { id: "v105", category: "Family & Social History", hanzi: "你的___有健康问题吗？", pinyin: "Nǐ de ___ yǒu jiàn kāng wèn tí ma?", english: "Does your ___ have health problems?", notes: "Family history query", audioKey: "family_health_problems" },
+      { id: "v106", category: "Family & Social History", hanzi: "家人 (妈妈/爸爸/兄弟姐妹/孩子)", pinyin: "Jiā rén (Mā mā/Bà ba/Xiōng dì jiě mèi/Hái zi)", english: "Family (Mother/Father/Siblings/Children)", notes: "Family members", audioKey: "family_members" },
+
+      // Social History (Session 4)
+      { id: "v107", category: "Family & Social History", hanzi: "你做工吗？", pinyin: "Nǐ zuò gōng ma?", english: "Do you work?", notes: "Employment", audioKey: "do_you_work" },
+      { id: "v108", category: "Family & Social History", hanzi: "你抽烟吗？你一天抽几包？", pinyin: "Nǐ chōu yān ma? Nǐ yì tiān chōu jǐ bāo?", english: "Do you smoke? How many packs a day?", notes: "Smoking history", audioKey: "smoking_packs" },
+      { id: "v109", category: "Family & Social History", hanzi: "你喝酒吗？ / 你用毒品吗?", pinyin: "Nǐ hē jiǔ ma? / Nǐ yòng dú pǐn ma?", english: "Do you drink alcohol? Do you use drugs?", notes: "Substance use", audioKey: "alcohol_drugs" },
+      { id: "v110", category: "Family & Social History", hanzi: "你运动吗？ / 你平时吃什么？", pinyin: "Nǐ yùn dòng ma? / Nǐ píng shí chī shén me?", english: "Do you exercise? What do you usually eat?", notes: "Lifestyle & Diet", audioKey: "exercise_diet" },
+      { id: "v111", category: "Family & Social History", hanzi: "你有性生活吗？", pinyin: "Ní yǒu xìng shēng huó ma?", english: "Are you sexually active?", notes: "Sexual history", audioKey: "sexually_active" }
+    ];
+
+    // =========================================================================
+    // CLINICAL SCENARIOS / VIGNETTES DATA
+    // =========================================================================
+    const CLINICAL_SCENARIOS = [
+      {
+        id: "s1",
+        title: "Scenario 1: Greeting & Escorting Patient (Session 1)",
+        context: "Greeting first patient of the day in clinic",
+        turns: [
+          { speaker: "Medical Student", hanzi: "不好意思让你久等了，请跟我来。", pinyin: "Bù hǎo yìsi ràng nǐ jiǔ děng le, qǐng gēn wǒ lái.", english: "Sorry to keep you waiting, please follow me." },
+          { speaker: "Patient", hanzi: "没事，我只等了三十分钟。", pinyin: "Méishì, wǒ zhǐ děngle sānshí fēnzhōng.", english: "No worries, I only waited 30 minutes." }
+        ]
+      },
+      {
+        id: "s2",
+        title: "Scenario 2: Interpreter Call & Nurse Entry (Session 1)",
+        context: "Arranging language assistance for Mandarin patient",
+        turns: [
+          { speaker: "Medical Student", hanzi: "你好，我是医学生。我只会说一点点中文，让我找一名翻译。", pinyin: "Nǐ hǎo, wǒ shì yī xuéshēng. Wǒ zhǐ huì shuō yīdiǎndiǎn Zhōngwén, ràng wǒ zhǎo yī míng fān yì.", english: "Hello, I am a medical student. I only speak a little Chinese, let me get an interpreter." },
+          { speaker: "Nurse", hanzi: "别担心，我是一名护士，我会说中文。", pinyin: "Bié dān xīn, wǒ shì yì míng hùshì, wǒ huì shuō Zhōngwén.", english: "Don't worry, I am a nurse and I can speak Chinese." }
+        ]
+      },
+      {
+        id: "s3",
+        title: "Scenario 3: 60yo Female Headache (CC & HPI - Session 3)",
+        context: "60-year-old woman presents with headache for 5 days",
+        turns: [
+          { speaker: "Medical Student", hanzi: "我是医学生。你为什么来看医生？", pinyin: "Wǒ shì yī xuéshēng. Nǐ wèi shén me lái kàn yī shēng?", english: "I am a medical student. Why are you coming to see the doctor?" },
+          { speaker: "Patient", hanzi: "我头痛。", pinyin: "Wǒ tóu tòng.", english: "I have a headache." },
+          { speaker: "Medical Student", hanzi: "能指一指哪里痛吗？什么时候开始痛？", pinyin: "Néng zhǐ yī zhǐ nǎ lǐ tòng ma? Shén me shí hòu kāi shǐ tòng?", english: "Can you point to where it hurts? When did it start?" },
+          { speaker: "Patient", hanzi: "这里痛。五天前开始痛。", pinyin: "Zhè lǐ tòng. Wǔ tiān qián kāi shǐ tòng.", english: "It hurts right here. It started 5 days ago." },
+          { speaker: "Medical Student", hanzi: "从一到十，你有多痛？", pinyin: "Cóng yī dào shí, nǐ yǒu duō tòng?", english: "From 1 to 10, how much pain are you in?" },
+          { speaker: "Patient", hanzi: "七分痛。", pinyin: "Qī fēn tòng.", english: "It is a 7." }
+        ]
+      },
+      {
+        id: "s4",
+        title: "Scenario 4: 45yo Male Back Pain (Breakout - Session 4)",
+        context: "45-year-old man presents with back pain for 3 hours",
+        turns: [
+          { speaker: "Medical Student", hanzi: "你好，我是医学生。你叫什么？你为什么来看医生？", pinyin: "Nǐ hǎo, wǒ shì yī xuéshēng. Nǐ jiào shén me? Nǐ wèi shén me lái kàn yī shēng?", english: "Hello, I am a medical student. What is your name? Why are you seeing the doctor?" },
+          { speaker: "Patient", hanzi: "我的背痛。", pinyin: "Wǒ de bèi tòng.", english: "My back hurts." },
+          { speaker: "Medical Student", hanzi: "什么时候开始痛？", pinyin: "Shén me shí hòu kāi shǐ tòng?", english: "When did it start?" },
+          { speaker: "Patient", hanzi: "三个小时前。", pinyin: "Sān ge xiǎo shí qián.", english: "Three hours ago." },
+          { speaker: "Medical Student", hanzi: "从一到十，你有多痛？什么会加重你的痛？", pinyin: "Cóng yī dào shí, nǐ yǒu duō tòng? Shén me huì jiā zhòng nǐ de tòng?", english: "From 1 to 10, how much pain are you in? What makes it worse?" },
+          { speaker: "Patient", hanzi: "八分痛。走路会加重。", pinyin: "Bā fēn tòng. Zǒu lù huì jiā zhòng.", english: "It's an 8. Walking makes it worse." }
+        ]
+      },
+      {
+        id: "s5",
+        title: "Scenario 5: 65yo Female PMH, FH, & SH Workup (Session 4)",
+        context: "Comprehensive history taking for a 65yo female",
+        turns: [
+          { speaker: "Medical Student", hanzi: "你以前有健康问题吗？有高血压或糖尿病吗？", pinyin: "Nǐ yǐ qián yǒu jiàn kāng wèn tí ma? Yǒu gāo xuě yā huò táng niào bìng ma?", english: "In the past, do you have health problems? Hypertension or diabetes?" },
+          { speaker: "Patient", hanzi: "我有高血压，吃药控制。", pinyin: "Wǒ yǒu gāo xuě yā, chī yào kòng zhì.", english: "I have hypertension, controlled with medication." },
+          { speaker: "Medical Student", hanzi: "你的家人有健康问题吗？你抽烟或喝酒吗？", pinyin: "Nǐ de jiā rén yǒu jiàn kāng wèn tí ma? Nǐ chōu yān huò hē jiǔ ma?", english: "Does your family have health problems? Do you smoke or drink?" },
+          { speaker: "Patient", hanzi: "我爸爸有糖尿病。我不抽烟，不喝酒。", pinyin: "Wǒ bà ba yǒu táng niào bìng. Wǒ bù chōu yān, bù hē jiǔ.", english: "My father had diabetes. I don't smoke and don't drink." }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // STATE & INITIALIZATION
+    // =========================================================================
+    let activeCategory = "All";
+    let activeDeck = [];
+    let currentCardIndex = 0;
+    let isFlipped = false;
+    let isGitHubAudioMode = false; // False = Default Speech Synthesis, True = GitHub Audio
+    let playbackSpeed = 0.85;
+    let localAudioMap = {};
+
+    let quizCurrentItem = null;
+    let quizScore = 0;
+    let quizStreak = 0;
+    let listeningCurrentItem = null;
+    let currentScenarioIndex = 0;
+
+    let srsState = {};
+
+    window.onload = function() {
+      loadSRSState();
+      buildCategoryChips();
+      filterFlashcards();
+      renderStats();
+      populateVocabCatFilter();
+      loadScenario(0);
+    };
+
+    function loadSRSState() {
+      const stored = localStorage.getItem('med_mandarin_srs_v4');
+      if (stored) {
+        try { srsState = JSON.parse(stored); } catch(e) { srsState = {}; }
+      }
+      VOCAB_DATA.forEach(item => {
+        if (!srsState[item.id]) {
+          srsState[item.id] = { box: 1, lastReview: Date.now() };
+        }
+      });
+      saveSRSState();
+    }
+
+    function saveSRSState() {
+      localStorage.setItem('med_mandarin_srs_v4', JSON.stringify(srsState));
+      renderStats();
+    }
+
+    function resetSRSProgress() {
+      if (confirm('Reset all SRS review boxes back to Box 1?')) {
+        VOCAB_DATA.forEach(item => {
+          srsState[item.id] = { box: 1, lastReview: Date.now() };
+        });
+        saveSRSState();
+        filterFlashcards();
+        showToast('SRS progress reset to Box 1', 'fa-rotate-left');
+      }
+    }
+
+    function renderStats() {
+      const total = VOCAB_DATA.length;
+      let b1 = 0, b23 = 0, b45 = 0;
+      Object.values(srsState).forEach(st => {
+        if (st.box === 1) b1++;
+        else if (st.box === 2 || st.box === 3) b23++;
+        else if (st.box >= 4) b45++;
+      });
+      document.getElementById('statTotal').innerText = total;
+      document.getElementById('statBox1').innerText = b1;
+      document.getElementById('statBox23').innerText = b23;
+      document.getElementById('statBox45').innerText = b45;
+    }
+
+    // =========================================================================
+    // AUDIO ENGINE SWITCH & PLAYBACK LOGIC
+    // =========================================================================
+    function toggleAudioEngine(isGitHubChecked) {
+      isGitHubAudioMode = isGitHubChecked;
+      
+      const labelTTS = document.getElementById('labelTTS');
+      const labelGitHub = document.getElementById('labelGitHub');
+      const uploadBtn = document.getElementById('uploadAudioBtn');
+
+      if (isGitHubAudioMode) {
+        labelTTS.className = "text-[11px] font-bold text-slate-500 flex items-center space-x-1";
+        labelGitHub.className = "text-[11px] font-bold text-sky-400 flex items-center space-x-1";
+        uploadBtn.classList.remove('hidden');
+        showToast('Switched to GitHub Uploaded Audio (audio/ folder)', 'fa-folder-open');
+      } else {
+        labelTTS.className = "text-[11px] font-bold text-sky-400 flex items-center space-x-1";
+        labelGitHub.className = "text-[11px] font-bold text-slate-500 flex items-center space-x-1";
+        uploadBtn.classList.add('hidden');
+        showToast('Switched to Default Speech Synthesis (TTS)', 'fa-robot');
+      }
+    }
+
+    function setPlaybackSpeed(val) {
+      playbackSpeed = parseFloat(val);
+      showToast(`Playback speed set to ${val}x`, 'fa-gauge-high');
+    }
+
+    function handleBatchAudioUpload(event) {
+      const files = event.target.files;
+      let count = 0;
+      for (let f of files) {
+        const cleanKey = f.name.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        localAudioMap[cleanKey] = URL.createObjectURL(f);
+        count++;
+      }
+      showToast(`Mapped ${count} local audio files!`, 'fa-cloud-arrow-up');
+    }
+
+    function playTextAudio(text, audioKey = '', english = '') {
+      if (!isGitHubAudioMode) {
+        // DEFAULT SPEECH SYNTHESIS ENGINE
+        if (!('speechSynthesis' in window)) {
+          showToast('Speech synthesis not supported on this browser', 'fa-triangle-exclamation');
+          return;
+        }
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-CN';
+        utterance.rate = playbackSpeed;
+        window.speechSynthesis.speak(utterance);
+      } else {
+        // GITHUB / UPLOADED AUDIO ENGINE
+        const keyEnglishClean = english.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const keyAudioClean = audioKey.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        let audioSrc = localAudioMap[keyEnglishClean] || localAudioMap[keyAudioClean];
+
+        if (!audioSrc) {
+          // Construct GitHub repo audio/ folder path candidates
+          const candidates = [
+            `audio/${encodeURIComponent(english)}.mp3`,
+            `audio/${english}.mp3`,
+            `audio/${audioKey}.mp3`,
+            `audio/${keyEnglishClean}.mp3`,
+            `audio/${keyAudioClean}.mp3`
+          ];
+          audioSrc = candidates[0];
+        }
+
+        const audio = new Audio(audioSrc);
+        audio.playbackRate = playbackSpeed;
+        
+        audio.play().catch(() => {
+          // Fallback to Speech Synthesis if audio file missing from audio/
+          showToast(`File audio/${english}.mp3 not found; using TTS fallback`, 'fa-circle-info');
+          const fallbackUtterance = new SpeechSynthesisUtterance(text);
+          fallbackUtterance.lang = 'zh-CN';
+          fallbackUtterance.rate = playbackSpeed;
+          window.speechSynthesis.speak(fallbackUtterance);
+        });
+      }
+    }
+
+    function playCurrentCardAudio() {
+      if (activeDeck.length === 0) return;
+      const card = activeDeck[currentCardIndex];
+      playTextAudio(card.hanzi, card.audioKey, card.english);
+    }
+
+    // =========================================================================
+    // CATEGORY CHIPS & FLASHCARD LOGIC
+    // =========================================================================
+    function buildCategoryChips() {
+      const container = document.getElementById('categoryChips');
+      container.innerHTML = ALL_CATEGORIES.map(cat => `
+        <button onclick="selectCategory('${cat}')" class="chip-btn px-3 py-1.5 rounded-2xl text-xs font-bold whitespace-nowrap transition border ${
+          cat === activeCategory 
+            ? 'bg-sky-600 text-white border-sky-500 shadow-md' 
+            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+        }">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    function selectCategory(cat) {
+      activeCategory = cat;
+      buildCategoryChips();
+      filterFlashcards();
+    }
+
+    function filterFlashcards() {
+      const query = document.getElementById('flashcardSearch').value.toLowerCase().trim();
+      activeDeck = VOCAB_DATA.filter(item => {
+        const matchCat = (activeCategory === "All" || item.category === activeCategory);
+        const matchQuery = !query || 
+          item.english.toLowerCase().includes(query) ||
+          item.pinyin.toLowerCase().includes(query) ||
+          item.hanzi.includes(query);
+        return matchCat && matchQuery;
+      });
+
+      currentCardIndex = 0;
+      isFlipped = false;
+      renderCard();
+    }
+
+    function renderCard() {
+      if (activeDeck.length === 0) {
+        document.getElementById('cardEnglish').innerText = "No matching cards found";
+        document.getElementById('cardCategoryFront').innerText = "Empty";
+        document.getElementById('cardBoxFront').innerText = "Box -";
+        document.getElementById('cardNotes').innerText = "Try clearing search filters";
+        document.getElementById('cardCounter').innerText = "0 / 0";
+        return;
+      }
+
+      const card = activeDeck[currentCardIndex];
+      const box = srsState[card.id]?.box || 1;
+
+      const cardInner = document.getElementById('cardInner');
+      if (isFlipped) {
+        cardInner.classList.remove('rotate-y-180');
+        isFlipped = false;
+      }
+
+      setTimeout(() => {
+        document.getElementById('cardCategoryFront').innerText = card.category;
+        document.getElementById('cardBoxFront').innerText = `Box ${box}`;
+        document.getElementById('cardEnglish').innerText = card.english;
+        document.getElementById('cardNotes').innerText = card.notes || "Click to flip card";
+
+        document.getElementById('cardCategoryBack').innerText = card.category;
+        document.getElementById('cardHanzi').innerText = card.hanzi;
+        document.getElementById('cardPinyin').innerText = card.pinyin;
+        document.getElementById('cardMeaning').innerText = card.english;
+        document.getElementById('cardToneNote').innerText = card.notes ? `Note: ${card.notes}` : "Practice correct tones";
+
+        document.getElementById('cardCounter').innerText = `${currentCardIndex + 1} / ${activeDeck.length}`;
+      }, 150);
+    }
+
+    function flipCard() {
+      if (activeDeck.length === 0) return;
+      const cardInner = document.getElementById('cardInner');
+      isFlipped = !isFlipped;
+      if (isFlipped) {
+        cardInner.classList.add('rotate-y-180');
+      } else {
+        cardInner.classList.remove('rotate-y-180');
+      }
+    }
+
+    function rateSRS(rating) {
+      if (activeDeck.length === 0) return;
+      const card = activeDeck[currentCardIndex];
+      let box = srsState[card.id]?.box || 1;
+
+      if (rating === 1) box = 1;
+      else if (rating === 2) box = Math.max(1, box - 1);
+      else if (rating === 3) box = Math.min(5, box + 1);
+      else if (rating === 4) box = Math.min(5, box + 2);
+
+      srsState[card.id] = { box, lastReview: Date.now() };
+      saveSRSState();
+
+      nextCard();
+    }
+
+    function nextCard() {
+      if (activeDeck.length === 0) return;
+      currentCardIndex = (currentCardIndex + 1) % activeDeck.length;
+      renderCard();
+    }
+
+    function prevCard() {
+      if (activeDeck.length === 0) return;
+      currentCardIndex = (currentCardIndex - 1 + activeDeck.length) % activeDeck.length;
+      renderCard();
+    }
+
+    // =========================================================================
+    // APP TAB SWITCHING
+    // =========================================================================
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-sky-600', 'text-white', 'shadow-md');
+        btn.classList.add('text-slate-400');
+      });
+
+      const target = document.getElementById(`view-${tabId}`);
+      if (target) target.classList.remove('hidden');
+
+      const btn = document.getElementById(`tab-${tabId}`);
+      if (btn) {
+        btn.classList.add('bg-sky-600', 'text-white', 'shadow-md');
+        btn.classList.remove('text-slate-400');
+      }
+
+      if (tabId === 'quiz') generateQuizQuestion();
+      if (tabId === 'listening') nextListeningItem();
+      if (tabId === 'index') renderVocabIndex();
+    }
+
+    // =========================================================================
+    // QUIZ MODE
+    // =========================================================================
+    function generateQuizQuestion() {
+      document.getElementById('btnNextQuiz').classList.add('hidden');
+      document.getElementById('quizFeedback').classList.add('hidden');
+
+      quizCurrentItem = VOCAB_DATA[Math.floor(Math.random() * VOCAB_DATA.length)];
+
+      document.getElementById('quizCategoryBadge').innerText = quizCurrentItem.category;
+      document.getElementById('quizPrompt').innerText = quizCurrentItem.english;
+
+      let distractors = VOCAB_DATA.filter(i => i.id !== quizCurrentItem.id);
+      distractors.sort(() => Math.random() - 0.5);
+      let choices = [quizCurrentItem, ...distractors.slice(0, 3)];
+      choices.sort(() => Math.random() - 0.5);
+
+      const optionsBox = document.getElementById('quizOptions');
+      optionsBox.innerHTML = '';
+
+      choices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = "p-3.5 rounded-2xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-left transition space-y-1 group";
+        btn.onclick = () => handleQuizAnswer(choice, btn);
+        btn.innerHTML = `
+          <div class="text-base font-bold text-sky-300 group-hover:text-sky-200">${choice.hanzi}</div>
+          <div class="text-xs font-mono text-cyan-400">${choice.pinyin}</div>
+        `;
+        optionsBox.appendChild(btn);
+      });
+    }
+
+    function playQuizAudio() {
+      if (quizCurrentItem) playTextAudio(quizCurrentItem.hanzi, quizCurrentItem.audioKey, quizCurrentItem.english);
+    }
+
+    function handleQuizAnswer(choice, btnElement) {
+      const isCorrect = choice.id === quizCurrentItem.id;
+      const feedback = document.getElementById('quizFeedback');
+
+      document.querySelectorAll('#quizOptions button').forEach(b => b.disabled = true);
+
+      if (isCorrect) {
+        quizScore += 10;
+        quizStreak += 1;
+        btnElement.className = "p-3.5 rounded-2xl bg-emerald-950/80 border-2 border-emerald-500 text-left text-emerald-200 space-y-1";
+        feedback.className = "p-3 rounded-xl text-center font-bold text-xs bg-emerald-950/80 text-emerald-300 border border-emerald-800";
+        feedback.innerText = `Correct! 🎉 ${quizCurrentItem.hanzi} (${quizCurrentItem.pinyin})`;
+      } else {
+        quizStreak = 0;
+        btnElement.className = "p-3.5 rounded-2xl bg-red-950/80 border-2 border-red-500 text-left text-red-200 space-y-1";
+        feedback.className = "p-3 rounded-xl text-center font-bold text-xs bg-red-950/80 text-red-300 border border-red-800";
+        feedback.innerText = `Incorrect. Correct: ${quizCurrentItem.hanzi} (${quizCurrentItem.pinyin})`;
+      }
+
+      document.getElementById('quizScore').innerText = quizScore;
+      document.getElementById('quizStreak').innerText = `${quizStreak} 🔥`;
+
+      feedback.classList.remove('hidden');
+      document.getElementById('btnNextQuiz').classList.remove('hidden');
+    }
+
+    // =========================================================================
+    // LISTENING LAB
+    // =========================================================================
+    function nextListeningItem() {
+      listeningCurrentItem = VOCAB_DATA[Math.floor(Math.random() * VOCAB_DATA.length)];
+      document.getElementById('listeningAnswerBox').classList.add('hidden');
+      document.getElementById('btnRevealListening').classList.remove('hidden');
+
+      setTimeout(() => { playListeningAudio(); }, 200);
+    }
+
+    function playListeningAudio() {
+      if (listeningCurrentItem) playTextAudio(listeningCurrentItem.hanzi, listeningCurrentItem.audioKey, listeningCurrentItem.english);
+    }
+
+    function revealListeningAnswer() {
+      if (!listeningCurrentItem) return;
+      document.getElementById('listeningHanzi').innerText = listeningCurrentItem.hanzi;
+      document.getElementById('listeningPinyin').innerText = listeningCurrentItem.pinyin;
+      document.getElementById('listeningEnglish').innerText = listeningCurrentItem.english;
+
+      document.getElementById('listeningAnswerBox').classList.remove('hidden');
+      document.getElementById('btnRevealListening').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // SCENARIO VIGNETTES
+    // =========================================================================
+    function loadScenario(index) {
+      currentScenarioIndex = parseInt(index);
+      const scen = CLINICAL_SCENARIOS[currentScenarioIndex];
+      document.getElementById('scenarioTitle').innerText = scen.title;
+      document.getElementById('scenarioContext').innerText = scen.context;
+      renderDialogue();
+    }
+
+    function renderDialogue() {
+      const scen = CLINICAL_SCENARIOS[currentScenarioIndex];
+      const showPinyin = document.getElementById('togglePinyinDialogue').checked;
+      const showEnglish = document.getElementById('toggleEnglishDialogue').checked;
+
+      const stream = document.getElementById('dialogueStream');
+      stream.innerHTML = '';
+
+      scen.turns.forEach((turn, idx) => {
+        const isMed = turn.speaker.includes('Medical Student') || turn.speaker.includes('Doctor');
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = `flex flex-col ${isMed ? 'items-start' : 'items-end'} space-y-1`;
+
+        const bubble = document.createElement('div');
+        bubble.onclick = () => playTextAudio(turn.hanzi, `scen_${currentScenarioIndex}_${idx}`, turn.english);
+        bubble.className = `max-w-[85%] sm:max-w-[78%] p-3.5 rounded-2xl cursor-pointer hover:scale-[1.01] transition shadow-lg ${
+          isMed 
+            ? 'bg-slate-900 border border-slate-800 text-slate-100 rounded-tl-none' 
+            : 'bg-sky-950/90 border border-sky-800 text-sky-100 rounded-tr-none'
+        }`;
+
+        bubble.innerHTML = `
+          <div class="flex items-center justify-between text-[10px] font-bold uppercase ${isMed ? 'text-sky-400' : 'text-cyan-400'} mb-1">
+            <span>${turn.speaker}</span>
+            <i class="fa-solid fa-volume-high text-xs opacity-70 ml-2"></i>
+          </div>
+          <div class="text-base font-bold text-white tracking-wide">${turn.hanzi}</div>
+          ${showPinyin ? `<div class="text-xs font-mono text-cyan-300 mt-1">${turn.pinyin}</div>` : ''}
+          ${showEnglish ? `<div class="text-xs text-slate-300 mt-1.5 pt-1.5 border-t border-slate-800/80">${turn.english}</div>` : ''}
+        `;
+
+        wrapper.appendChild(bubble);
+        stream.appendChild(wrapper);
+      });
+    }
+
+    function playFullDialogueSequence() {
+      const scen = CLINICAL_SCENARIOS[currentScenarioIndex];
+      let delay = 0;
+      scen.turns.forEach((turn, idx) => {
+        setTimeout(() => {
+          playTextAudio(turn.hanzi, `scen_${currentScenarioIndex}_${idx}`, turn.english);
+        }, delay);
+        delay += (turn.hanzi.length * 280) + 1200;
+      });
+      showToast('Playing vignette sequence...', 'fa-play');
+    }
+
+    // =========================================================================
+    // SEARCHABLE VOCABULARY INDEX
+    // =========================================================================
+    function populateVocabCatFilter() {
+      const select = document.getElementById('vocabCatFilter');
+      select.innerHTML = ALL_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    function renderVocabIndex() {
+      const query = document.getElementById('vocabSearch').value.toLowerCase().trim();
+      const cat = document.getElementById('vocabCatFilter').value;
+
+      const filtered = VOCAB_DATA.filter(item => {
+        const matchCat = (cat === "All" || item.category === cat);
+        const matchQuery = !query || 
+          item.english.toLowerCase().includes(query) ||
+          item.pinyin.toLowerCase().includes(query) ||
+          item.hanzi.includes(query);
+        return matchCat && matchQuery;
+      });
+
+      const tbody = document.getElementById('vocabTableBody');
+      tbody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No matching terms found</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const box = srsState[item.id]?.box || 1;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/50 transition";
+        tr.innerHTML = `
+          <td class="p-3 sm:p-4 text-base font-bold text-sky-200">${item.hanzi}</td>
+          <td class="p-3 sm:p-4 font-mono text-cyan-300">${item.pinyin}</td>
+          <td class="p-3 sm:p-4 font-medium text-slate-200">${item.english}</td>
+          <td class="p-3 sm:p-4 hidden md:table-cell text-slate-400 text-[11px]">${item.category}</td>
+          <td class="p-3 sm:p-4 text-center">
+            <button onclick="playTextAudio('${item.hanzi}', '${item.audioKey}', '${item.english}')" class="p-1.5 rounded-lg bg-slate-950 hover:bg-sky-500 hover:text-slate-950 text-sky-400 transition">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+          </td>
+          <td class="p-3 sm:p-4 text-center">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+              box === 1 ? 'bg-red-950/60 text-red-300 border-red-800' :
+              box < 4 ? 'bg-amber-950/60 text-amber-300 border-amber-800' :
+              'bg-emerald-950/60 text-emerald-300 border-emerald-800'
+            }">Box ${box}</span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // =========================================================================
+    // UTILITY TOAST NOTIFICATIONS
+    // =========================================================================
+    function showToast(msg, icon = 'fa-circle-check') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      document.getElementById('toastIcon').className = `fa-solid ${icon} text-sky-400 text-lg`;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2200);
+    }
+  </script>
+</body>
+</html>
